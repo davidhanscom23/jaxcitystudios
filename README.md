@@ -18,12 +18,11 @@ npm run dev
 
 ## Stripe — where to paste your live key
 
-1. Open your host’s environment variables (or `.env.local` locally).
-2. Paste your **live** secret key into **`STRIPE_LIVE_SECRET_KEY`**.
-3. Set `STRIPE_MODE=live`.
-4. Set `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` to your `pk_live_...` key.
+**One instruction:** paste your live Stripe secret key into the environment variable named **`STRIPE_LIVE_SECRET_KEY`** (in `.env.local` or your host’s secret store), set `STRIPE_MODE=live`, and set `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` to your `pk_live_...` key.
 
-Until then, use `STRIPE_SECRET_KEY` with `sk_test_...` and keep `STRIPE_MODE=test`. Checkout will not silently fake a successful payment.
+Until then, use `STRIPE_SECRET_KEY` with `sk_test_...` and keep `STRIPE_MODE=test`. Checkout talks to real Stripe Checkout in test mode; it does **not** silently fake a successful payment. Without a key, the Book → Pay deposit step returns a clear configuration error.
+
+Deposit checkout is implemented with Next.js Route Handlers + Stripe Checkout (Lovable Cloud was not available in this environment).
 
 ## Scripts
 

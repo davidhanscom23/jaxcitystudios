@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "verify:rates": "npx tsx scripts/verify-rates.ts"
   },
   "dependencies": {
     "@stripe/stripe-js": "^9.15.0",
