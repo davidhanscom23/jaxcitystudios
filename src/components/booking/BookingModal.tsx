@@ -1,0 +1,575 @@
+"use client";
+
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
+import { useBooking } from "@/components/booking/BookingProvider";
+import {
+  ADDONS,
+  DEPOSIT,
+  ENGINEERED,
+  PACKAGES,
+  ROOMS,
+  STUDIO,
+  balanceOnArrival,
+  depositAmount,
+  engineeredTotal,
+  type RoomId,
+} from "@/lib/rates";
+
+type Step =
+  | "date-room"
+  | "package"
+  | "times"
+  | "contact"
+  | "addon"
+  | "checkout"
+  | "done";
+
+const STEPS: Step[] = [
+  "date-room",
+  "package",
+  "times",
+  "contact",
+  "addon",
+  "checkout",
+];
+
+function hoursBetween(start: string, end: string): number {
+  if (!start || !end) return ENGINEERED.minimumHours;
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  const diff = (eh * 60 + em - (sh * 60 + sm)) / 60;
+  if (Number.isNaN(diff) || diff <= 0) return ENGINEERED.minimumHours;
+  return Math.max(ENGINEERED.minimumHours, Math.round(diff * 4) / 4);
+}
+
+export function BookingModal() {
+  const {
+    open,
+    closeBooking,
+    initialRoomId,
+    initialPackageId,
+    planner,
+  } = useBooking();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const [step, setStep] = useState<Step>("date-room");
+  const [date, setDate] = useState("");
+  const [roomId, setRoomId] = useState<RoomId>("venus");
+  const [packageId, setPackageId] = useState("session");
+  const [start, setStart] = useState("14:00");
+  const [end, setEnd] = useState("16:00");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [clientType, setClientType] = useState<"first-time" | "returning">(
+    "first-time",
+  );
+  const [addonIndex, setAddonIndex] = useState(0);
+  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [doneMsg, setDoneMsg] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setStep("date-room");
+    setAddonIndex(0);
+    setSelectedAddons([]);
+    setError("");
+    setDoneMsg("");
+    if (initialRoomId) setRoomId(initialRoomId);
+    if (planner?.roomId) setRoomId(planner.roomId);
+    if (initialPackageId) setPackageId(initialPackageId);
+    if (planner?.clientType) setClientType(planner.clientType);
+    if (planner?.bookedHours) {
+      setStart("14:00");
+      const endH = 14 + planner.bookedHours;
+      const eh = Math.floor(endH);
+      const em = Math.round((endH - eh) * 60);
+      setEnd(`${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`);
+    }
+  }, [open, initialRoomId, initialPackageId, planner]);
+
+  useEffect(() => {
+    if (!open) return;
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [step, open, addonIndex]);
+
+  const hours = hoursBetween(start, end);
+
+  const studioSubtotal = useMemo(() => {
+    if (packageId === "series") return PACKAGES.series.sampleTotal;
+    if (packageId === "partner") return PACKAGES.partner.sampleMonthlyTotal;
+    return engineeredTotal(hours, clientType);
+  }, [packageId, hours, clientType]);
+
+  const addonTotal = selectedAddons.reduce((sum, id) => {
+    const a = ADDONS.find((x) => x.id === id);
+    return sum + (a?.packagePrice ?? 0);
+  }, 0);
+
+  const total = studioSubtotal + addonTotal;
+  const deposit = depositAmount(total);
+  const balance = balanceOnArrival(total);
+  const rateLabel =
+    packageId === "session"
+      ? clientType === "first-time"
+        ? `$${ENGINEERED.firstTimeHourly}/hr first-time engineered`
+        : `$${ENGINEERED.returningHourly}/hr returning engineered`
+      : packageId === "series"
+        ? "The Series (sample package total)"
+        : "The Studio Partner (sample monthly total)";
+
+  function nextFrom(current: Step) {
+    if (current === "addon") {
+      if (addonIndex < ADDONS.length - 1) {
+        setAddonIndex((i) => i + 1);
+        return;
+      }
+      setStep("checkout");
+      return;
+    }
+    const idx = STEPS.indexOf(current);
+    if (idx >= 0 && idx < STEPS.length - 1) setStep(STEPS[idx + 1]);
+  }
+
+  function backFrom(current: Step) {
+    if (current === "addon" && addonIndex > 0) {
+      setAddonIndex((i) => i - 1);
+      return;
+    }
+    if (current === "checkout") {
+      setStep("addon");
+      setAddonIndex(ADDONS.length - 1);
+      return;
+    }
+    if (current === "addon") {
+      setStep("contact");
+      return;
+    }
+    const idx = STEPS.indexOf(current);
+    if (idx > 0) setStep(STEPS[idx - 1]);
+  }
+
+  async function payDeposit() {
+    setBusy(true);
+    setError("");
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date,
+          roomId,
+          packageId,
+          start,
+          end,
+          hours,
+          name,
+          email,
+          phone,
+          clientType,
+          selectedAddons,
+          total,
+          deposit,
+          balance,
+          planner,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Checkout failed.");
+        setBusy(false);
+        return;
+      }
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      setDoneMsg(data.message || "Deposit session created.");
+      setStep("done");
+    } catch {
+      setError("Network error starting Stripe Checkout.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open) return null;
+
+  const currentAddon = ADDONS[addonIndex];
+
+  return (
+    <div className="no-print fixed inset-0 z-[60] flex items-stretch justify-center bg-ink/80 p-0 sm:items-center sm:p-6">
+      <div className="relative flex h-full w-full max-w-xl flex-col border border-rule bg-charcoal sm:h-[min(40rem,90vh)]">
+        <button
+          type="button"
+          className="absolute right-4 top-4 z-10 font-caps text-[0.65rem] text-muted"
+          onClick={closeBooking}
+        >
+          Close
+        </button>
+
+        <div ref={scrollRef} className="modal-scroll flex-1 px-6 pb-28 pt-10 sm:px-8">
+          {step === "date-room" && (
+            <StepShell
+              eyebrow="Step 1"
+              title="Date and room"
+              onBack={null}
+              onNext={() => {
+                if (!date) {
+                  setError("Pick a date.");
+                  return;
+                }
+                setError("");
+                nextFrom("date-room");
+              }}
+              error={error}
+            >
+              <label className="block">
+                <span className="font-caps text-[0.65rem] text-muted">Date</span>
+                <input
+                  type="date"
+                  className="input mt-2"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                />
+              </label>
+              <div className="mt-6 grid gap-2">
+                {ROOMS.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    className={`border px-4 py-3 text-left transition-colors ${
+                      roomId === r.id
+                        ? "border-paper bg-graphite"
+                        : "border-rule hover:border-paper-dim"
+                    }`}
+                    onClick={() => setRoomId(r.id)}
+                  >
+                    <span className="font-display text-xl">{r.name}</span>
+                    <span className="mt-1 block text-sm text-muted">
+                      Room-only ${r.hourly}/hr · engineered includes room
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {planner && (
+                <p className="mt-4 border border-rule bg-graphite p-3 text-sm text-paper-dim">
+                  Planner attached: {planner.bookedHours}h studio · $
+                  {planner.studioCost} engineered estimate
+                  {planner.title ? ` · ${planner.title}` : ""}.
+                </p>
+              )}
+            </StepShell>
+          )}
+
+          {step === "package" && (
+            <StepShell
+              eyebrow="Step 2"
+              title="Package"
+              onBack={() => backFrom("package")}
+              onNext={() => nextFrom("package")}
+            >
+              {(
+                [
+                  PACKAGES.session,
+                  PACKAGES.series,
+                  PACKAGES.partner,
+                ] as const
+              ).map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`mb-2 w-full border px-4 py-4 text-left ${
+                    packageId === p.id
+                      ? "border-paper bg-graphite"
+                      : "border-rule"
+                  }`}
+                  onClick={() => setPackageId(p.id)}
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="font-display text-2xl">{p.name}</span>
+                    {p.kind === "sample" && (
+                      <span className="font-caps text-[0.6rem] text-accent">
+                        Sample pricing
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-2 text-sm text-paper-dim">{p.tagline}</p>
+                </button>
+              ))}
+            </StepShell>
+          )}
+
+          {step === "times" && (
+            <StepShell
+              eyebrow="Step 3"
+              title="Start and end"
+              onBack={() => backFrom("times")}
+              onNext={() => nextFrom("times")}
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <label>
+                  <span className="font-caps text-[0.65rem] text-muted">
+                    Start
+                  </span>
+                  <input
+                    type="time"
+                    className="input mt-2"
+                    value={start}
+                    onChange={(e) => setStart(e.target.value)}
+                  />
+                </label>
+                <label>
+                  <span className="font-caps text-[0.65rem] text-muted">End</span>
+                  <input
+                    type="time"
+                    className="input mt-2"
+                    value={end}
+                    onChange={(e) => setEnd(e.target.value)}
+                  />
+                </label>
+              </div>
+              <p className="mt-4 text-paper-dim">
+                {hours} hour{hours === 1 ? "" : "s"} booked (two-hour minimum
+                enforced). Live total uses {rateLabel}
+                {packageId === "session" ? `: $${studioSubtotal}` : ""}.
+              </p>
+              {packageId === "session" && (
+                <p className="mt-2 text-sm text-muted">
+                  Math: {hours} × $
+                  {clientType === "first-time"
+                    ? ENGINEERED.firstTimeHourly
+                    : ENGINEERED.returningHourly}{" "}
+                  = ${studioSubtotal}. Room included.
+                </p>
+              )}
+              {packageId !== "session" && (
+                <p className="mt-2 text-sm text-accent">
+                  Package subtotal ${studioSubtotal} includes sample components —
+                  see Pricing for the published vs sample split.
+                </p>
+              )}
+            </StepShell>
+          )}
+
+          {step === "contact" && (
+            <StepShell
+              eyebrow="Step 4"
+              title="You"
+              onBack={() => backFrom("contact")}
+              onNext={() => {
+                if (!name || !email || !phone) {
+                  setError("Name, email, and phone — all three.");
+                  return;
+                }
+                setError("");
+                nextFrom("contact");
+              }}
+              error={error}
+            >
+              <div className="space-y-3">
+                <input
+                  className="input"
+                  placeholder="Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+                <input
+                  className="input"
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <input
+                  className="input"
+                  type="tel"
+                  placeholder="Phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+                <div className="grid grid-cols-2 gap-2 pt-2">
+                  <button
+                    type="button"
+                    className={`border px-3 py-3 font-caps text-[0.7rem] ${
+                      clientType === "first-time"
+                        ? "border-paper bg-graphite"
+                        : "border-rule"
+                    }`}
+                    onClick={() => setClientType("first-time")}
+                  >
+                    First-time · ${ENGINEERED.firstTimeHourly}/hr
+                  </button>
+                  <button
+                    type="button"
+                    className={`border px-3 py-3 font-caps text-[0.7rem] ${
+                      clientType === "returning"
+                        ? "border-paper bg-graphite"
+                        : "border-rule"
+                    }`}
+                    onClick={() => setClientType("returning")}
+                  >
+                    Returning · ${ENGINEERED.returningHourly}/hr
+                  </button>
+                </div>
+              </div>
+            </StepShell>
+          )}
+
+          {step === "addon" && currentAddon && (
+            <StepShell
+              eyebrow={`Add-on ${addonIndex + 1} of ${ADDONS.length}`}
+              title={currentAddon.name}
+              onBack={() => backFrom("addon")}
+              onNext={() => nextFrom("addon")}
+              nextLabel="Skip"
+              secondary={{
+                label: `Add · $${currentAddon.packagePrice}`,
+                onClick: () => {
+                  setSelectedAddons((ids) =>
+                    ids.includes(currentAddon.id)
+                      ? ids
+                      : [...ids, currentAddon.id],
+                  );
+                  nextFrom("addon");
+                },
+              }}
+            >
+              <p className="text-paper-dim">
+                <span className="line-through text-muted">
+                  ${currentAddon.original}
+                </span>{" "}
+                <span className="text-paper">${currentAddon.packagePrice}</span>
+                {currentAddon.kind === "sample" && (
+                  <span className="ml-2 font-caps text-[0.6rem] text-accent">
+                    Sample offer pricing
+                  </span>
+                )}
+              </p>
+              <p className="mt-4 text-sm text-muted">
+                Take it or skip — one at a time. No pile-on screen.
+              </p>
+            </StepShell>
+          )}
+
+          {step === "checkout" && (
+            <StepShell
+              eyebrow="Deposit"
+              title="Lock the date"
+              onBack={() => backFrom("checkout")}
+              onNext={payDeposit}
+              nextLabel={busy ? "Starting Checkout…" : `Pay $${deposit} deposit`}
+              error={error}
+            >
+              <p className="text-paper-dim">{DEPOSIT.policy}</p>
+              <dl className="mt-6 space-y-2 border border-rule p-4 text-sm">
+                <Row label="Session total" value={`$${total}`} />
+                <Row label="Deposit due now (50%)" value={`$${deposit}`} />
+                <Row label="Balance on arrival" value={`$${balance}`} />
+                <Row label="Room" value={ROOMS.find((r) => r.id === roomId)?.name ?? ""} />
+                <Row label="Date" value={date} />
+                <Row label="Time" value={`${start}–${end} (${hours}h)`} />
+              </dl>
+              <p className="mt-4 text-sm text-muted">
+                Stripe test mode until you paste your live secret key into{" "}
+                <code className="text-paper-dim">STRIPE_LIVE_SECRET_KEY</code>{" "}
+                (see <code className="text-paper-dim">.env.example</code>).
+              </p>
+            </StepShell>
+          )}
+
+          {step === "done" && (
+            <div>
+              <p className="font-caps text-[0.68rem] text-accent">Booked path</p>
+              <h2 className="font-display mt-3 text-4xl">Deposit next</h2>
+              <p className="mt-4 text-paper-dim">{doneMsg}</p>
+              <p className="mt-4 text-sm text-muted">
+                Questions: {STUDIO.phone} · {STUDIO.email}
+              </p>
+              <button type="button" className="btn btn-solid mt-6" onClick={closeBooking}>
+                Close
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Slim summary bar */}
+        <div className="absolute bottom-0 left-0 right-0 border-t border-rule bg-ink/95 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 font-caps text-[0.62rem] tracking-[0.14em] text-muted">
+            <span>
+              {ROOMS.find((r) => r.id === roomId)?.name} · {hours}h · {rateLabel}
+            </span>
+            <span className="text-paper">
+              ${total} · deposit ${deposit}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-4">
+      <dt className="text-muted">{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
+}
+
+function StepShell({
+  eyebrow,
+  title,
+  children,
+  onBack,
+  onNext,
+  nextLabel = "Continue",
+  secondary,
+  error,
+}: {
+  eyebrow: string;
+  title: string;
+  children: ReactNode;
+  onBack: (() => void) | null;
+  onNext: ((e?: FormEvent) => void) | (() => void);
+  nextLabel?: string;
+  secondary?: { label: string; onClick: () => void };
+  error?: string;
+}) {
+  return (
+    <div>
+      <p className="font-caps text-[0.68rem] text-muted">{eyebrow}</p>
+      <h2 className="font-display mt-2 text-[clamp(2rem,6vw,3.2rem)] leading-none">
+        {title}
+      </h2>
+      <div className="mt-8">{children}</div>
+      {error && <p className="mt-4 text-sm text-accent">{error}</p>}
+      <div className="mt-10 flex flex-wrap gap-3">
+        {onBack && (
+          <button type="button" className="btn" onClick={onBack}>
+            Back
+          </button>
+        )}
+        {secondary && (
+          <button type="button" className="btn btn-accent" onClick={secondary.onClick}>
+            {secondary.label}
+          </button>
+        )}
+        <button type="button" className="btn btn-solid" onClick={() => onNext()}>
+          {nextLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
