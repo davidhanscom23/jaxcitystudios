@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useBooking } from "@/components/booking/BookingProvider";
+import { RoomName } from "@/components/RoomName";
 import {
   ADDONS,
   DEPOSIT,
@@ -253,9 +254,14 @@ export function BookingModal() {
                         ? "border-paper bg-graphite"
                         : "border-rule hover:border-paper-dim"
                     }`}
+                    style={
+                      roomId === r.id
+                        ? { borderColor: r.color, boxShadow: `0 0 14px ${r.color}55` }
+                        : undefined
+                    }
                     onClick={() => setRoomId(r.id)}
                   >
-                    <span className="font-display text-xl">{r.name}</span>
+                    <RoomName roomId={r.id} size="md" className="text-xl" />
                     <span className="mt-1 block text-sm text-muted">
                       Room-only ${r.hourly}/hr · engineered includes room
                     </span>
@@ -476,7 +482,7 @@ export function BookingModal() {
                 <Row label="Session total" value={`$${total}`} />
                 <Row label="Deposit due now (50%)" value={`$${deposit}`} />
                 <Row label="Balance on arrival" value={`$${balance}`} />
-                <Row label="Room" value={ROOMS.find((r) => r.id === roomId)?.name ?? ""} />
+                <Row label="Room" value={<RoomName roomId={roomId} size="sm" className="text-sm" />} />
                 <Row label="Date" value={date} />
                 <Row label="Time" value={`${start}–${end} (${hours}h)`} />
               </dl>
@@ -506,8 +512,11 @@ export function BookingModal() {
         {/* Slim summary bar */}
         <div className="absolute bottom-0 left-0 right-0 border-t border-rule bg-ink/95 px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-2 font-caps text-[0.62rem] tracking-[0.14em] text-muted">
-            <span>
-              {ROOMS.find((r) => r.id === roomId)?.name} · {hours}h · {rateLabel}
+            <span className="inline-flex items-center gap-2 normal-case tracking-normal">
+              <RoomName roomId={roomId} size="sm" className="text-sm" />
+              <span className="font-caps tracking-[0.14em]">
+                · {hours}h · {rateLabel}
+              </span>
             </span>
             <span className="text-paper">
               ${total} · deposit ${deposit}
@@ -519,7 +528,7 @@ export function BookingModal() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex justify-between gap-4">
       <dt className="text-muted">{label}</dt>

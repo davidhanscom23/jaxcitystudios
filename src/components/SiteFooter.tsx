@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { STUDIO } from "@/lib/rates";
 
@@ -5,14 +6,25 @@ export function SiteFooter() {
   return (
     <footer className="no-print border-t border-rule bg-charcoal">
       <div className="wide-margin section-space">
-        <p className="font-caps text-[0.7rem] text-muted">Brand line</p>
-        <p className="font-display crop-type mt-3 text-[clamp(3rem,12vw,8rem)] text-paper">
-          {STUDIO.brandLine}
-        </p>
-        <p className="mt-4 max-w-xl font-body text-paper-dim">
-          Music recording and podcast production for {STUDIO.region}. The room
-          and the engineer are the session.
-        </p>
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="font-caps text-[0.7rem] text-cyan">Brand line</p>
+            <p className="font-display crop-type mt-3 text-[clamp(3rem,12vw,8rem)] text-paper text-glow-cyan">
+              {STUDIO.brandLine}
+            </p>
+            <p className="mt-4 max-w-xl font-body text-paper-dim">
+              Music recording and podcast production for {STUDIO.region}. The room
+              and the engineer are the session.
+            </p>
+          </div>
+          <Image
+            src="/images/logo.png"
+            alt="JaxCity Studios logo"
+            width={280}
+            height={187}
+            className="h-28 w-auto sm:h-36"
+          />
+        </div>
 
         <div className="mt-14 grid gap-10 border-t border-rule pt-10 md:grid-cols-3">
           <div>
@@ -58,13 +70,13 @@ export function SiteFooter() {
           </div>
           <div>
             <p className="font-caps text-[0.68rem] text-muted">Note</p>
-            <p className="mt-4 text-paper-dim">{STUDIO.seriousInquiries}</p>
+            <p className="mt-4 text-hot">{STUDIO.seriousInquiries}</p>
             <p className="mt-6 text-sm text-muted">
               <a
                 href="https://www.mentorpods.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-paper-dim hover:text-paper"
+                className="text-paper-dim hover:text-cyan"
               >
                 I love Mentor Pods
               </a>
