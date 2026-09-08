@@ -1,17 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #0c0c0c;
-  --charcoal: #161616;
-  --graphite: #1e1e1e;
-  --slate: #2a2a2a;
-  --rule: #3a3a3a;
-  --muted: #8a8680;
-  --paper: #f3efe6;
-  --paper-dim: #d9d4c8;
-  --accent: #c45c26;
-  --accent-soft: #a34a1c;
-  --duotone-blue: #1a2a3a;
+  /* Flyer / logo neon-noir palette */
+  --ink: #050508;
+  --charcoal: #0c0c12;
+  --graphite: #14141c;
+  --slate: #1e1e2a;
+  --rule: #2a2a3d;
+  --muted: #9a96a8;
+  --paper: #f4f6ff;
+  --paper-dim: #c8c6d8;
+  --cyan: #2ee6ff;
+  --magenta: #ff3b9a;
+  --violet: #b24bf3;
+  --gold: #f5c518;
+  --hot: #ff3b5c;
+  --accent: var(--cyan);
+  --accent-soft: #1ab8cc;
+  --accent-pink: var(--magenta);
+  --glow-cyan: 0 0 18px rgba(46, 230, 255, 0.45);
+  --glow-magenta: 0 0 18px rgba(255, 59, 154, 0.4);
   --background: var(--ink);
   --foreground: var(--paper);
 }
@@ -26,6 +34,11 @@
   --color-paper: var(--paper);
   --color-paper-dim: var(--paper-dim);
   --color-accent: var(--accent);
+  --color-cyan: var(--cyan);
+  --color-magenta: var(--magenta);
+  --color-violet: var(--violet);
+  --color-gold: var(--gold);
+  --color-hot: var(--hot);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-display: var(--font-display);
@@ -42,7 +55,10 @@ html {
 }
 
 body {
-  background: var(--ink);
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(46, 230, 255, 0.08), transparent 55%),
+    radial-gradient(ellipse 70% 45% at 90% 0%, rgba(255, 59, 154, 0.07), transparent 50%),
+    var(--ink);
   color: var(--paper);
   font-family: var(--font-body), "Newsreader", Georgia, serif;
   font-size: 1.0625rem;
@@ -51,8 +67,8 @@ body {
 }
 
 ::selection {
-  background: var(--accent);
-  color: var(--paper);
+  background: var(--cyan);
+  color: var(--ink);
 }
 
 a {
@@ -79,9 +95,47 @@ a {
   font-family: var(--font-body), "Newsreader", Georgia, serif;
 }
 
+.text-glow-cyan {
+  text-shadow: 0 0 12px rgba(46, 230, 255, 0.55), 0 0 28px rgba(46, 230, 255, 0.25);
+}
+
+.text-glow-magenta {
+  text-shadow: 0 0 12px rgba(255, 59, 154, 0.5), 0 0 28px rgba(255, 59, 154, 0.22);
+}
+
 .rule {
   border: 0;
   border-top: 1px solid var(--rule);
+}
+
+/* Soft overlay for real studio photos — keep color, add night depth */
+.photo-wrap {
+  position: relative;
+  overflow: hidden;
+  background: #050508;
+}
+
+.photo-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 5, 8, 0.2) 0%,
+    rgba(5, 5, 8, 0.15) 40%,
+    rgba(5, 5, 8, 0.72) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.photo-wrap.photo-side::after {
+  background: linear-gradient(
+    90deg,
+    rgba(5, 5, 8, 0.55) 0%,
+    rgba(5, 5, 8, 0.15) 55%,
+    rgba(5, 5, 8, 0.45) 100%
+  );
 }
 
 .duotone {
@@ -90,7 +144,7 @@ a {
 }
 
 .duotone-wrap {
-  background: linear-gradient(160deg, #0a0a0a 0%, #1a2430 55%, #121212 100%);
+  background: linear-gradient(160deg, #050508 0%, #12182a 55%, #0c0c12 100%);
   position: relative;
   overflow: hidden;
 }
@@ -101,10 +155,22 @@ a {
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(12, 12, 12, 0.15) 0%,
-    rgba(12, 12, 12, 0.55) 100%
+    rgba(5, 5, 8, 0.15) 0%,
+    rgba(5, 5, 8, 0.55) 100%
   );
   pointer-events: none;
+}
+
+.neon-frame {
+  border: 1px solid rgba(46, 230, 255, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255, 59, 154, 0.08), var(--glow-cyan);
+  border-radius: 0.75rem;
+}
+
+.neon-frame-pink {
+  border: 1px solid rgba(255, 59, 154, 0.4);
+  box-shadow: var(--glow-magenta);
+  border-radius: 0.75rem;
 }
 
 .fade-in {
@@ -149,7 +215,7 @@ a {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border: 1px solid var(--paper);
+  border: 1px solid var(--cyan);
   background: transparent;
   color: var(--paper);
   padding: 0.85rem 1.4rem;
@@ -157,35 +223,41 @@ a {
   letter-spacing: 0.16em;
   text-transform: uppercase;
   font-size: 0.78rem;
-  transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease;
+  border-radius: 999px;
+  box-shadow: 0 0 14px rgba(46, 230, 255, 0.2);
+  transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease,
+    box-shadow 0.35s ease;
   cursor: pointer;
   text-decoration: none;
 }
 
 .btn:hover {
-  background: var(--paper);
-  color: var(--ink);
+  background: rgba(46, 230, 255, 0.12);
+  box-shadow: var(--glow-cyan);
 }
 
 .btn-solid {
-  background: var(--paper);
+  background: var(--cyan);
   color: var(--ink);
+  border-color: var(--cyan);
+  box-shadow: var(--glow-cyan);
 }
 
 .btn-solid:hover {
   background: transparent;
-  color: var(--paper);
+  color: var(--cyan);
 }
 
 .btn-accent {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: var(--magenta);
+  background: var(--magenta);
   color: var(--paper);
+  box-shadow: var(--glow-magenta);
 }
 
 .btn-accent:hover {
   background: transparent;
-  color: var(--accent);
+  color: var(--magenta);
 }
 
 .input,
@@ -198,32 +270,42 @@ a {
   padding: 0.85rem 1rem;
   font-family: var(--font-body), Georgia, serif;
   font-size: 1rem;
-  border-radius: 0;
+  border-radius: 0.5rem;
 }
 
 .input:focus,
 .select:focus,
 .textarea:focus {
-  outline: 1px solid var(--paper-dim);
+  outline: 1px solid var(--cyan);
   outline-offset: 2px;
+  box-shadow: 0 0 12px rgba(46, 230, 255, 0.25);
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  border: 1px solid var(--rule);
+  border: 1px solid rgba(46, 230, 255, 0.35);
   padding: 0.35rem 0.7rem;
   font-family: var(--font-caps), sans-serif;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-size: 0.68rem;
   background: var(--graphite);
+  border-radius: 999px;
 }
 
 .modal-scroll {
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+.room-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  box-shadow: 0 0 10px currentColor;
 }
 
 @media print {
