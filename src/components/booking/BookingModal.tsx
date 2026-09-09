@@ -31,6 +31,8 @@ import {
   formatClock12,
   formatTimeRange12,
 } from "@/lib/time";
+import { BookingAgreementStep } from "@/components/booking/BookingAgreementStep";
+import type { AgreementFill } from "@/lib/rental-agreement";
 
 type Step =
   | "date-room"
@@ -39,6 +41,7 @@ type Step =
   | "contact"
   | "addon"
   | "checkout"
+  | "agreement"
   | "done";
 
 const STEPS: Step[] = [
@@ -91,6 +94,12 @@ export function BookingModal() {
   const [availabilityError, setAvailabilityError] = useState("");
   const [payMethod, setPayMethod] = useState<"paypal" | "zelle">("paypal");
   const [bookingId, setBookingId] = useState("");
+  const [agreementId, setAgreementId] = useState("");
+  const [agreementCode, setAgreementCode] = useState("");
+  const [agreementFill, setAgreementFill] = useState<AgreementFill | null>(
+    null,
+  );
+  const [agreementSigned, setAgreementSigned] = useState(false);
   const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "";
 
   useEffect(() => {
@@ -104,6 +113,10 @@ export function BookingModal() {
     setAvailableStarts([]);
     setBookedBlocks([]);
     setBookingId("");
+    setAgreementId("");
+    setAgreementCode("");
+    setAgreementFill(null);
+    setAgreementSigned(false);
     setPayMethod("paypal");
     if (initialRoomId) setRoomId(initialRoomId);
     if (planner?.roomId) setRoomId(planner.roomId);
@@ -190,7 +203,7 @@ export function BookingModal() {
         setAddonIndex((i) => i + 1);
         return;
       }
-      setStep("checkout");
+      void openAgreementStep();
       return;
     }
     const idx = STEPS.indexOf(current);
@@ -203,6 +216,10 @@ export function BookingModal() {
       return;
     }
     if (current === "checkout") {
+      setStep("agreement");
+      return;
+    }
+    if (current === "agreement") {
       setStep("addon");
       setAddonIndex(ADDONS.length - 1);
       return;
@@ -213,6 +230,22 @@ export function BookingModal() {
     }
     const idx = STEPS.indexOf(current);
     if (idx > 0) setStep(STEPS[idx - 1]);
+  }
+
+  async function linkAgreementToBooking(nextBookingId: string) {
+    if (!agreementId || !agreementCode) return;
+    try {
+      await fetch(`/api/agreements/${agreementId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: agreementCode,
+          bookingId: nextBookingId,
+        }),
+      });
+    } catch {
+      // Non-blocking — payment still succeeded.
+    }
   }
 
   const createPayPalCheckout = useCallback(async () => {
@@ -283,8 +316,11 @@ export function BookingModal() {
           setError(data.error || "Could not capture PayPal payment");
           return;
         }
+        const id = (data.bookingId || info.bookingId) as string;
+        setBookingId(id);
+        await linkAgreementToBooking(id);
         setDoneMsg(
-          `Deposit received via PayPal/Venmo. Booking ${data.bookingId || info.bookingId} is confirmed on the calendar. Remaining balance $${balance} due on arrival.`,
+          `Deposit received via PayPal/Venmo. Booking ${id} is confirmed. Remaining balance $${balance} due on arrival.`,
         );
         setStep("done");
       } catch {
@@ -293,8 +329,78 @@ export function BookingModal() {
         setBusy(false);
       }
     },
-    [balance],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [balance, agreementId, agreementCode],
   );
+
+  async function openAgreementStep() {
+    setBusy(true);
+    setError("");
+    try {
+      // Reuse an already-prepared draft if the renter went back and forward.
+      if (agreementId && agreementFill && agreementCode) {
+        const res = await fetch(`/api/agreements/${agreementId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code: agreementCode,
+            renterName: name,
+            renterEmail: email,
+            renterPhone: phone,
+            roomId,
+            sessionDate: date,
+            startTime: start,
+            endTime: end,
+            durationHours: hours,
+            total,
+            deposit,
+            clearSignatures: true,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Could not refresh agreement");
+        setAgreementFill(data.agreement.fill);
+        setAgreementCode(data.agreement.accessCode);
+        setAgreementSigned(false);
+        setStep("agreement");
+        return;
+      }
+
+      const res = await fetch("/api/agreements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          renterName: name,
+          renterEmail: email,
+          renterPhone: phone,
+          roomId,
+          sessionDate: date,
+          startTime: start,
+          endTime: end,
+          durationHours: hours,
+          total,
+          deposit,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Could not prepare rental agreement");
+      }
+      setAgreementId(data.agreement.id);
+      setAgreementCode(data.agreement.accessCode);
+      setAgreementFill(data.agreement.fill);
+      setAgreementSigned(false);
+      setStep("agreement");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not prepare rental agreement",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function submitZelleHold() {
     setBusy(true);
@@ -327,9 +433,11 @@ export function BookingModal() {
         setError(data.error || "Could not hold this slot for Zelle.");
         return;
       }
-      setBookingId(data.bookingId || "");
+      const id = (data.bookingId || "") as string;
+      setBookingId(id);
+      await linkAgreementToBooking(id);
       setDoneMsg(
-        `Slot held pending Zelle. Send $${deposit} to ${PUBLIC_PAYMENTS.zelleDestination} (name: ${PUBLIC_PAYMENTS.zelleName}). Include your name and ${date} ${formatClock12(start)} in the memo. Remaining $${balance} due on arrival. Ref: ${data.bookingId}`,
+        `Slot held pending Zelle. Send $${deposit} to ${PUBLIC_PAYMENTS.zelleDestination} (name: ${PUBLIC_PAYMENTS.zelleName}). Include your name and ${date} ${formatClock12(start)} in the memo. Remaining $${balance} due on arrival. Ref: ${id}`,
       );
       setStep("done");
     } catch {
@@ -345,7 +453,7 @@ export function BookingModal() {
 
   return (
     <div className="no-print fixed inset-0 z-[60] flex items-stretch justify-center bg-ink/80 p-0 sm:items-center sm:p-6">
-      <div className="relative flex h-full w-full max-w-xl flex-col border border-rule bg-charcoal sm:h-[min(40rem,90vh)]">
+      <div className="relative flex h-full w-full max-w-xl flex-col border border-rule bg-charcoal sm:h-[min(44rem,92vh)]">
         <button
           type="button"
           className="absolute right-4 top-4 z-10 font-caps text-[0.65rem] text-muted"
@@ -701,8 +809,8 @@ export function BookingModal() {
 
           {step === "checkout" && (
             <StepShell
-              eyebrow="Deposit"
-              title="Lock the date"
+              eyebrow="Final step"
+              title="Pay the deposit"
               onBack={() => backFrom("checkout")}
               onNext={
                 payMethod === "zelle"
@@ -814,27 +922,53 @@ export function BookingModal() {
             </StepShell>
           )}
 
+          {step === "agreement" && agreementFill && (
+            <div>
+              <BookingAgreementStep
+                agreementId={agreementId}
+                accessCode={agreementCode}
+                fill={agreementFill}
+                alreadySigned={agreementSigned}
+                onBack={() => backFrom("agreement")}
+                onError={setError}
+                onSigned={() => {
+                  setAgreementSigned(true);
+                  setError("");
+                  setStep("checkout");
+                }}
+              />
+              {error && <p className="mt-4 text-sm text-accent">{error}</p>}
+            </div>
+          )}
+
           {step === "done" && (
             <div>
-              <p className="font-caps text-[0.68rem] text-accent">Booked path</p>
-              <h2 className="font-display mt-3 text-4xl">Deposit next</h2>
+              <p className="font-caps text-[0.68rem] text-accent">Complete</p>
+              <h2 className="font-display mt-3 text-4xl">You&apos;re booked</h2>
               <p className="mt-4 text-paper-dim">{doneMsg}</p>
               {bookingId && (
                 <p className="mt-3 font-caps text-[0.65rem] text-muted">
-                  Ref · {bookingId}
+                  Booking ref · {bookingId}
+                </p>
+              )}
+              {agreementCode && (
+                <p className="mt-2 font-caps text-[0.65rem] text-cyan">
+                  Agreement code · {agreementCode}
                 </p>
               )}
               <p className="mt-4 text-sm text-muted">
                 Questions: {STUDIO.phone} · {STUDIO.email}
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
-                <a
-                  className="btn btn-solid no-underline"
-                  href={`/agreement?bookingId=${encodeURIComponent(bookingId)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}&room=${roomId}&date=${date}&start=${start}&hours=${hours}&total=${total}&deposit=${deposit}`}
-                >
-                  Sign rental agreement
-                </a>
-                <button type="button" className="btn" onClick={closeBooking}>
+                {agreementId && agreementCode && (
+                  <a
+                    className="btn no-underline"
+                    href={`/agreement/${agreementId}?code=${encodeURIComponent(agreementCode)}`}
+                  >
+                    View agreement
+                  </a>
+                )}
+                <button type="button" className="btn btn-solid" onClick={closeBooking}>
                   Close
                 </button>
               </div>

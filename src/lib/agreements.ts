@@ -138,6 +138,7 @@ export function updateAgreementFill(
   accessCode: string,
   patch: Partial<AgreementInput> & {
     clearSignatures?: boolean;
+    bookingId?: string | null;
   },
 ): AgreementRow | { error: string } {
   const row = getAgreementByAccess(id, accessCode);
@@ -166,12 +167,27 @@ export function updateAgreementFill(
   const fill = buildAgreementFill(nextInput);
   const now = new Date().toISOString();
   const wasSigned = row.status === "signed";
-  const clear = patch.clearSignatures ?? wasSigned;
+  // Linking a booking id alone should not wipe signatures.
+  const onlyBookingLink =
+    patch.bookingId !== undefined &&
+    patch.renterName === undefined &&
+    patch.roomId === undefined &&
+    patch.sessionDate === undefined &&
+    patch.startTime === undefined &&
+    patch.endTime === undefined &&
+    patch.durationHours === undefined &&
+    patch.total === undefined &&
+    patch.deposit === undefined;
+  const clear = onlyBookingLink
+    ? false
+    : (patch.clearSignatures ?? wasSigned);
 
   const updated: AgreementRow = {
     ...row,
+    booking_id:
+      patch.bookingId !== undefined ? patch.bookingId : row.booking_id,
     status: clear ? "draft" : row.status,
-    revision: wasSigned || clear ? row.revision + 1 : row.revision,
+    revision: clear && wasSigned ? row.revision + 1 : row.revision,
     template_version: AGREEMENT_TEMPLATE_VERSION,
     fill_json: JSON.stringify(fill),
     renter_signature: clear ? null : row.renter_signature,
@@ -184,6 +200,7 @@ export function updateAgreementFill(
   getDb()
     .prepare(
       `UPDATE agreements SET
+        booking_id = @booking_id,
         status = @status,
         revision = @revision,
         template_version = @template_version,
