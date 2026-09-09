@@ -71,16 +71,6 @@ export function SiteFooter() {
           <div>
             <p className="font-caps text-[0.68rem] text-muted">Note</p>
             <p className="mt-4 text-hot">{STUDIO.seriousInquiries}</p>
-            <p className="mt-6 text-sm text-muted">
-              <a
-                href="https://www.mentorpods.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-paper-dim hover:text-cyan"
-              >
-                I love Mentor Pods
-              </a>
-            </p>
           </div>
         </div>
 
