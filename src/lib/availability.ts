@@ -4,7 +4,6 @@ import { getDb } from "@/lib/db";
 import {
   minutesToTime,
   studioCloseBoundary,
-  timeToMinutes,
   toStudioDayMinutes,
 } from "@/lib/time";
 
@@ -92,7 +91,7 @@ export function isSlotAvailable(
   const existing = getBookingsForDay(roomId, date);
   for (const b of existing) {
     if (excludeBookingId && b.id === excludeBookingId) continue;
-    let bStart = toStudioDayMinutes(b.start_time, open, overnight);
+    const bStart = toStudioDayMinutes(b.start_time, open, overnight);
     let bEnd = toStudioDayMinutes(b.end_time, open, overnight);
     if (bEnd <= bStart) bEnd += 24 * 60;
     if (rangesOverlap(startM, endM, bStart, bEnd)) {
