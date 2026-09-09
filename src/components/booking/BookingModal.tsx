@@ -99,6 +99,7 @@ export function BookingModal() {
   const [agreementFill, setAgreementFill] = useState<AgreementFill | null>(
     null,
   );
+  const [agreementSigned, setAgreementSigned] = useState(false);
   const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "";
 
   useEffect(() => {
@@ -115,6 +116,7 @@ export function BookingModal() {
     setAgreementId("");
     setAgreementCode("");
     setAgreementFill(null);
+    setAgreementSigned(false);
     setPayMethod("paypal");
     if (initialRoomId) setRoomId(initialRoomId);
     if (planner?.roomId) setRoomId(planner.roomId);
@@ -201,7 +203,7 @@ export function BookingModal() {
         setAddonIndex((i) => i + 1);
         return;
       }
-      setStep("checkout");
+      void openAgreementStep();
       return;
     }
     const idx = STEPS.indexOf(current);
@@ -214,6 +216,10 @@ export function BookingModal() {
       return;
     }
     if (current === "checkout") {
+      setStep("agreement");
+      return;
+    }
+    if (current === "agreement") {
       setStep("addon");
       setAddonIndex(ADDONS.length - 1);
       return;
@@ -224,6 +230,22 @@ export function BookingModal() {
     }
     const idx = STEPS.indexOf(current);
     if (idx > 0) setStep(STEPS[idx - 1]);
+  }
+
+  async function linkAgreementToBooking(nextBookingId: string) {
+    if (!agreementId || !agreementCode) return;
+    try {
+      await fetch(`/api/agreements/${agreementId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: agreementCode,
+          bookingId: nextBookingId,
+        }),
+      });
+    } catch {
+      // Non-blocking — payment still succeeded.
+    }
   }
 
   const createPayPalCheckout = useCallback(async () => {
@@ -296,30 +318,58 @@ export function BookingModal() {
         }
         const id = (data.bookingId || info.bookingId) as string;
         setBookingId(id);
+        await linkAgreementToBooking(id);
         setDoneMsg(
-          `Deposit received via PayPal/Venmo. Booking ${id} is confirmed on the calendar. Remaining balance $${balance} due on arrival.`,
+          `Deposit received via PayPal/Venmo. Booking ${id} is confirmed. Remaining balance $${balance} due on arrival.`,
         );
-        await openAgreementStep(id);
+        setStep("done");
       } catch {
         setError("Network error capturing PayPal payment.");
       } finally {
         setBusy(false);
       }
     },
-    // openAgreementStep defined below — include deps used inside it via eslint
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [balance, date, roomId, start, end, hours, name, email, phone, total, deposit],
+    [balance, agreementId, agreementCode],
   );
 
-  async function openAgreementStep(nextBookingId: string) {
+  async function openAgreementStep() {
     setBusy(true);
     setError("");
     try {
+      // Reuse an already-prepared draft if the renter went back and forward.
+      if (agreementId && agreementFill && agreementCode) {
+        const res = await fetch(`/api/agreements/${agreementId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code: agreementCode,
+            renterName: name,
+            renterEmail: email,
+            renterPhone: phone,
+            roomId,
+            sessionDate: date,
+            startTime: start,
+            endTime: end,
+            durationHours: hours,
+            total,
+            deposit,
+            clearSignatures: true,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Could not refresh agreement");
+        setAgreementFill(data.agreement.fill);
+        setAgreementCode(data.agreement.accessCode);
+        setAgreementSigned(false);
+        setStep("agreement");
+        return;
+      }
+
       const res = await fetch("/api/agreements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          bookingId: nextBookingId,
           renterName: name,
           renterEmail: email,
           renterPhone: phone,
@@ -339,6 +389,7 @@ export function BookingModal() {
       setAgreementId(data.agreement.id);
       setAgreementCode(data.agreement.accessCode);
       setAgreementFill(data.agreement.fill);
+      setAgreementSigned(false);
       setStep("agreement");
     } catch (err) {
       setError(
@@ -346,7 +397,6 @@ export function BookingModal() {
           ? err.message
           : "Could not prepare rental agreement",
       );
-      setStep("done");
     } finally {
       setBusy(false);
     }
@@ -385,10 +435,11 @@ export function BookingModal() {
       }
       const id = (data.bookingId || "") as string;
       setBookingId(id);
+      await linkAgreementToBooking(id);
       setDoneMsg(
         `Slot held pending Zelle. Send $${deposit} to ${PUBLIC_PAYMENTS.zelleDestination} (name: ${PUBLIC_PAYMENTS.zelleName}). Include your name and ${date} ${formatClock12(start)} in the memo. Remaining $${balance} due on arrival. Ref: ${id}`,
       );
-      await openAgreementStep(id);
+      setStep("done");
     } catch {
       setError("Network error starting Zelle hold.");
     } finally {
@@ -758,8 +809,8 @@ export function BookingModal() {
 
           {step === "checkout" && (
             <StepShell
-              eyebrow="Deposit"
-              title="Lock the date"
+              eyebrow="Final step"
+              title="Pay the deposit"
               onBack={() => backFrom("checkout")}
               onNext={
                 payMethod === "zelle"
@@ -877,13 +928,13 @@ export function BookingModal() {
                 agreementId={agreementId}
                 accessCode={agreementCode}
                 fill={agreementFill}
-                depositNote={doneMsg}
+                alreadySigned={agreementSigned}
+                onBack={() => backFrom("agreement")}
                 onError={setError}
                 onSigned={() => {
-                  setDoneMsg(
-                    `${doneMsg} Rental agreement signed. Access code ${agreementCode} — reopen anytime from Agreement → Find yours.`,
-                  );
-                  setStep("done");
+                  setAgreementSigned(true);
+                  setError("");
+                  setStep("checkout");
                 }}
               />
               {error && <p className="mt-4 text-sm text-accent">{error}</p>}
