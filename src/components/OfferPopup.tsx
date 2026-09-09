@@ -1,15 +1,17 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { INTRO_PROMO, STUDIO } from "@/lib/rates";
+import { ENGINEERED, INTRO_PROMO, STUDIO } from "@/lib/rates";
 
-type Step = "closed" | "email" | "phone" | "done";
+type Step = "closed" | "email" | "phone" | "done" | "ineligible";
 
 export function OfferPopup() {
   const [step, setStep] = useState<Step>("closed");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [ineligibleReason, setIneligibleReason] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -39,6 +41,24 @@ export function OfferPopup() {
     }
   }
 
+  async function checkEligibility(nextEmail: string, nextPhone?: string) {
+    const params = new URLSearchParams();
+    if (nextEmail.includes("@")) params.set("email", nextEmail.trim());
+    if (nextPhone && nextPhone.replace(/\D/g, "").length >= 10) {
+      params.set("phone", nextPhone.trim());
+    }
+    const res = await fetch(`/api/client-eligibility?${params}`);
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Could not check offer eligibility");
+    }
+    return data as {
+      canUseIntroPromo: boolean;
+      canUseFirstTime: boolean;
+      reason: string | null;
+    };
+  }
+
   async function onEmail(e: FormEvent) {
     e.preventDefault();
     if (!email.includes("@")) {
@@ -46,8 +66,30 @@ export function OfferPopup() {
       return;
     }
     setError("");
-    await submitLead({ email, stage: "intro-2hrs-80" });
-    setStep("phone");
+    setBusy(true);
+    try {
+      const eligibility = await checkEligibility(email);
+      if (!eligibility.canUseIntroPromo) {
+        setIneligibleReason(
+          eligibility.reason ||
+            "This email already used a first session or the intro offer.",
+        );
+        await submitLead({ email, stage: "intro-already-used" });
+        sessionStorage.setItem("jaxcity-offer-seen", "1");
+        setStep("ineligible");
+        return;
+      }
+      await submitLead({ email, stage: "intro-2hrs-80" });
+      setStep("phone");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not verify the intro offer — try again.",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function onPhone(e: FormEvent) {
@@ -57,9 +99,31 @@ export function OfferPopup() {
       return;
     }
     setError("");
-    await submitLead({ email, phone, stage: "intro-plus-tour" });
-    sessionStorage.setItem("jaxcity-offer-seen", "1");
-    setStep("done");
+    setBusy(true);
+    try {
+      const eligibility = await checkEligibility(email, phone);
+      if (!eligibility.canUseIntroPromo) {
+        setIneligibleReason(
+          eligibility.reason ||
+            "This phone already used a first session or the intro offer.",
+        );
+        await submitLead({ email, phone, stage: "intro-already-used" });
+        sessionStorage.setItem("jaxcity-offer-seen", "1");
+        setStep("ineligible");
+        return;
+      }
+      await submitLead({ email, phone, stage: "intro-plus-tour" });
+      sessionStorage.setItem("jaxcity-offer-seen", "1");
+      setStep("done");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not verify the intro offer — try again.",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (step === "closed") return null;
@@ -80,7 +144,8 @@ export function OfferPopup() {
             </h2>
             <p className="mt-3 text-paper-dim">
               First session. Two engineered hours. Eighty bucks. Not a forever
-              rate — just the door kick for people who actually show up.
+              rate — just the door kick for people who actually show up. One
+              redemption per email or phone.
             </p>
             <p className="mt-2 text-sm text-muted">
               Email unlocks the intro. Gen Z energy, Millennial follow-through.
@@ -95,8 +160,12 @@ export function OfferPopup() {
                 required
               />
               {error && <p className="text-sm text-accent">{error}</p>}
-              <button type="submit" className="btn btn-accent w-full">
-                Lock the {INTRO_PROMO.label}
+              <button
+                type="submit"
+                className="btn btn-accent w-full"
+                disabled={busy}
+              >
+                {busy ? "Checking…" : `Lock the ${INTRO_PROMO.label}`}
               </button>
             </form>
             <button
@@ -129,8 +198,12 @@ export function OfferPopup() {
                 required
               />
               {error && <p className="text-sm text-accent">{error}</p>}
-              <button type="submit" className="btn btn-accent w-full">
-                Yes — tour + extra off
+              <button
+                type="submit"
+                className="btn btn-accent w-full"
+                disabled={busy}
+              >
+                {busy ? "Checking…" : "Yes — tour + extra off"}
               </button>
             </form>
             <button
@@ -154,10 +227,28 @@ export function OfferPopup() {
             <p className="mt-3 text-paper-dim">
               Watch {email || "your inbox"} for the first-session code:{" "}
               {INTRO_PROMO.label}. Text {STUDIO.phone} or DM {STUDIO.instagram}{" "}
-              when you’re ready to lock a date — 50% deposit holds it.
+              when you’re ready to lock a date — 50% deposit holds it. One use
+              only for this email/phone.
             </p>
             <button type="button" className="btn btn-solid mt-6" onClick={dismiss}>
               Back to the site
+            </button>
+          </>
+        )}
+
+        {step === "ineligible" && (
+          <>
+            <h2 id="offer-title" className="font-display text-3xl">
+              Already claimed
+            </h2>
+            <p className="mt-3 text-paper-dim">{ineligibleReason}</p>
+            <p className="mt-3 text-sm text-muted">
+              Returning engineered sessions are ${ENGINEERED.returningHourly}
+              /hr. Book through the site, text {STUDIO.phone}, or DM{" "}
+              {STUDIO.instagram}.
+            </p>
+            <button type="button" className="btn btn-solid mt-6" onClick={dismiss}>
+              Got it
             </button>
           </>
         )}

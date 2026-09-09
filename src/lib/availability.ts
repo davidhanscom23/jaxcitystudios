@@ -203,6 +203,8 @@ export type CreateBookingInput = {
   clientPhone?: string;
   clientType?: string;
   packageId?: string;
+  /** e.g. INTRO_PROMO.id when the one-time intro rate was applied */
+  promoId?: string | null;
   hours?: number;
   totalCents?: number;
   depositCents?: number;
@@ -233,13 +235,13 @@ export function createBooking(input: CreateBookingInput): {
       `INSERT INTO bookings (
         id, room_id, session_date, start_time, end_time, status,
         client_name, client_email, client_phone, client_type, package_id,
-        hours, total_cents, deposit_cents, stripe_session_id, payment_method,
-        payment_ref, notes, created_at, updated_at
+        promo_id, hours, total_cents, deposit_cents, stripe_session_id,
+        payment_method, payment_ref, notes, created_at, updated_at
       ) VALUES (
         @id, @room_id, @session_date, @start_time, @end_time, @status,
         @client_name, @client_email, @client_phone, @client_type, @package_id,
-        @hours, @total_cents, @deposit_cents, @stripe_session_id, @payment_method,
-        @payment_ref, @notes, @created_at, @updated_at
+        @promo_id, @hours, @total_cents, @deposit_cents, @stripe_session_id,
+        @payment_method, @payment_ref, @notes, @created_at, @updated_at
       )`,
     )
     .run({
@@ -254,6 +256,7 @@ export function createBooking(input: CreateBookingInput): {
       client_phone: input.clientPhone ?? null,
       client_type: input.clientType ?? null,
       package_id: input.packageId ?? null,
+      promo_id: input.promoId ?? null,
       hours: input.hours ?? null,
       total_cents: input.totalCents ?? null,
       deposit_cents: input.depositCents ?? null,

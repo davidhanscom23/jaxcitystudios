@@ -17,12 +17,13 @@ import {
   ADDONS,
   DEPOSIT,
   ENGINEERED,
+  INTRO_PROMO,
   PACKAGES,
   ROOMS,
   STUDIO,
   balanceOnArrival,
   depositAmount,
-  engineeredTotal,
+  sessionStudioTotal,
   type RoomId,
 } from "@/lib/rates";
 import { PUBLIC_PAYMENTS } from "@/lib/payments-public";
@@ -79,6 +80,12 @@ export function BookingModal() {
   const [clientType, setClientType] = useState<"first-time" | "returning">(
     "first-time",
   );
+  const [eligibility, setEligibility] = useState<{
+    canUseFirstTime: boolean;
+    canUseIntroPromo: boolean;
+    reason: string | null;
+  } | null>(null);
+  const [eligibilityLoading, setEligibilityLoading] = useState(false);
   const [addonIndex, setAddonIndex] = useState(0);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -118,6 +125,8 @@ export function BookingModal() {
     setAgreementFill(null);
     setAgreementSigned(false);
     setPayMethod("paypal");
+    setEligibility(null);
+    setEligibilityLoading(false);
     if (initialRoomId) setRoomId(initialRoomId);
     if (planner?.roomId) setRoomId(planner.roomId);
     if (initialPackageId) setPackageId(initialPackageId);
@@ -171,14 +180,64 @@ export function BookingModal() {
     };
   }, [open, date, roomId, durationHours]);
 
+  const refreshEligibility = useCallback(async (nextEmail: string, nextPhone: string) => {
+    if (!nextEmail.includes("@") && nextPhone.replace(/\D/g, "").length < 10) {
+      setEligibility(null);
+      return null;
+    }
+    setEligibilityLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (nextEmail.includes("@")) params.set("email", nextEmail.trim());
+      if (nextPhone.replace(/\D/g, "").length >= 10) {
+        params.set("phone", nextPhone.trim());
+      }
+      const res = await fetch(`/api/client-eligibility?${params}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not check eligibility");
+      const next = {
+        canUseFirstTime: Boolean(data.canUseFirstTime),
+        canUseIntroPromo: Boolean(data.canUseIntroPromo),
+        reason: (data.reason as string | null) || null,
+      };
+      setEligibility(next);
+      if (!next.canUseFirstTime) setClientType("returning");
+      return next;
+    } catch {
+      setEligibility(null);
+      return null;
+    } finally {
+      setEligibilityLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!open || step !== "contact") return;
+    if (!email.includes("@") && phone.replace(/\D/g, "").length < 10) return;
+    const t = window.setTimeout(() => {
+      void refreshEligibility(email, phone);
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [open, step, email, phone, refreshEligibility]);
+
   const end = start ? addHoursToTime(start, durationHours) : "";
   const hours = durationHours;
+
+  const applyIntroPromo =
+    packageId === "session" &&
+    clientType === "first-time" &&
+    hours === INTRO_PROMO.hours &&
+    (eligibility?.canUseIntroPromo ?? true);
 
   const studioSubtotal = useMemo(() => {
     if (packageId === "series") return PACKAGES.series.sampleTotal;
     if (packageId === "partner") return PACKAGES.partner.sampleMonthlyTotal;
-    return engineeredTotal(hours, clientType);
-  }, [packageId, hours, clientType]);
+    return sessionStudioTotal({
+      hours,
+      clientType,
+      applyIntroPromo,
+    });
+  }, [packageId, hours, clientType, applyIntroPromo]);
 
   const addonTotal = selectedAddons.reduce((sum, id) => {
     const a = ADDONS.find((x) => x.id === id);
@@ -190,9 +249,11 @@ export function BookingModal() {
   const balance = balanceOnArrival(total);
   const rateLabel =
     packageId === "session"
-      ? clientType === "first-time"
-        ? `$${ENGINEERED.firstTimeHourly}/hr first-time engineered`
-        : `$${ENGINEERED.returningHourly}/hr returning engineered`
+      ? applyIntroPromo
+        ? `${INTRO_PROMO.label} intro (first session)`
+        : clientType === "first-time"
+          ? `$${ENGINEERED.firstTimeHourly}/hr first-time engineered`
+          : `$${ENGINEERED.returningHourly}/hr returning engineered`
       : packageId === "series"
         ? "The Series (sample package total)"
         : "The Studio Partner (sample monthly total)";
@@ -269,6 +330,8 @@ export function BookingModal() {
         balance,
         planner,
         paymentMethod: "paypal",
+        applyIntroPromo,
+        promoId: applyIntroPromo ? INTRO_PROMO.id : null,
       }),
     });
     const data = await res.json();
@@ -299,6 +362,7 @@ export function BookingModal() {
     deposit,
     balance,
     planner,
+    applyIntroPromo,
   ]);
 
   const onPayPalApproved = useCallback(
@@ -426,6 +490,8 @@ export function BookingModal() {
           balance,
           planner,
           paymentMethod: "zelle",
+          applyIntroPromo,
+          promoId: applyIntroPromo ? INTRO_PROMO.id : null,
         }),
       });
       const data = await res.json();
@@ -691,11 +757,13 @@ export function BookingModal() {
               )}
               {packageId === "session" && start && (
                 <p className="mt-2 text-sm text-muted">
-                  Math: {hours} × $
-                  {clientType === "first-time"
-                    ? ENGINEERED.firstTimeHourly
-                    : ENGINEERED.returningHourly}{" "}
-                  = ${studioSubtotal}. Room included.
+                  {applyIntroPromo
+                    ? `Intro math: ${INTRO_PROMO.hours} hours for $${INTRO_PROMO.price} (first session only). Room included.`
+                    : `Math: ${hours} × $${
+                        clientType === "first-time"
+                          ? ENGINEERED.firstTimeHourly
+                          : ENGINEERED.returningHourly
+                      } = $${studioSubtotal}. Room included.`}
                 </p>
               )}
               {packageId !== "session" && (
@@ -712,9 +780,18 @@ export function BookingModal() {
               eyebrow="Step 4"
               title="You"
               onBack={() => backFrom("contact")}
-              onNext={() => {
+              onNext={async () => {
                 if (!name || !email || !phone) {
                   setError("Name, email, and phone — all three.");
+                  return;
+                }
+                const check = await refreshEligibility(email, phone);
+                if (check && !check.canUseFirstTime && clientType === "first-time") {
+                  setClientType("returning");
+                  setError(
+                    check.reason ||
+                      "First-time rates already used for this contact — switched to returning.",
+                  );
                   return;
                 }
                 setError("");
@@ -750,7 +827,12 @@ export function BookingModal() {
                       clientType === "first-time"
                         ? "border-paper bg-graphite"
                         : "border-rule"
+                    } ${
+                      eligibility && !eligibility.canUseFirstTime
+                        ? "cursor-not-allowed opacity-40"
+                        : ""
                     }`}
+                    disabled={Boolean(eligibility && !eligibility.canUseFirstTime)}
                     onClick={() => setClientType("first-time")}
                   >
                     First-time · ${ENGINEERED.firstTimeHourly}/hr
@@ -767,6 +849,24 @@ export function BookingModal() {
                     Returning · ${ENGINEERED.returningHourly}/hr
                   </button>
                 </div>
+                {eligibilityLoading && (
+                  <p className="text-sm text-muted">Checking first-session eligibility…</p>
+                )}
+                {eligibility && !eligibility.canUseFirstTime && (
+                  <p className="text-sm text-accent">
+                    {eligibility.reason ||
+                      "This contact already booked — returning rates apply."}
+                  </p>
+                )}
+                {eligibility?.canUseIntroPromo &&
+                  packageId === "session" &&
+                  hours === INTRO_PROMO.hours &&
+                  clientType === "first-time" && (
+                    <p className="text-sm text-paper-dim">
+                      Intro unlocked: {INTRO_PROMO.label} will apply at checkout
+                      (one-time, first session only).
+                    </p>
+                  )}
               </div>
             </StepShell>
           )}
@@ -1018,7 +1118,7 @@ function StepShell({
   title: string;
   children: ReactNode;
   onBack: (() => void) | null;
-  onNext: ((e?: FormEvent) => void) | (() => void) | null;
+  onNext: ((e?: FormEvent) => void | Promise<void>) | (() => void | Promise<void>) | null;
   nextLabel?: string;
   secondary?: { label: string; onClick: () => void };
   error?: string;
