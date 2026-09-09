@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useBooking } from "@/components/booking/BookingProvider";
 import { RoomName } from "@/components/RoomName";
 import { ENGINEERED, INTRO_PROMO, ROOMS, STUDIO } from "@/lib/rates";
+import { ReviewsSection } from "@/components/ReviewsSection";
 
 export function HomePage() {
   const { openBooking } = useBooking();
@@ -191,26 +192,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* First review invite */}
-      <section className="section-space wide-margin border-t border-rule">
-        <p className="font-caps text-[0.7rem] text-muted">Reviews</p>
-        <h2 className="font-display mt-4 max-w-[16ch] text-4xl sm:text-5xl">
-          Be the first on record
-        </h2>
-        <p className="mt-6 max-w-xl text-paper-dim">
-          JaxCity Studios is building its public review presence. No invented
-          quotes here. After your session, leave the studio’s first review on
-          Instagram.
-        </p>
-        <a
-          href={STUDIO.instagramUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-solid mt-8 inline-flex no-underline"
-        >
-          Review on {STUDIO.instagram}
-        </a>
-      </section>
+      <ReviewsSection />
 
       {/* CTA — flyer magenta intro */}
       <section className="section-space border-t border-rule bg-graphite">
