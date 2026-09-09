@@ -92,6 +92,27 @@ export function getDb(): Database.Database {
     db.exec("ALTER TABLE bookings ADD COLUMN payment_ref TEXT");
   }
 
+  // Rental agreements table (electronic form + signatures)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS agreements (
+      id TEXT PRIMARY KEY,
+      access_code TEXT NOT NULL UNIQUE,
+      booking_id TEXT,
+      status TEXT NOT NULL CHECK (status IN ('draft', 'signed')),
+      template_version INTEGER NOT NULL,
+      revision INTEGER NOT NULL DEFAULT 1,
+      fill_json TEXT NOT NULL,
+      renter_signature TEXT,
+      renter_signed_at TEXT,
+      owner_signature TEXT,
+      owner_signed_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_agreements_booking
+      ON agreements(booking_id);
+  `);
+
   const roomUpsert = db.prepare(`
     INSERT INTO rooms (id, name, hourly_room_only)
     VALUES (@id, @name, @hourly)

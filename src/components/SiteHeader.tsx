@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/lineup", label: "Lineup" },
   { href: "/pricing", label: "Pricing" },
   { href: "/planner", label: "Build Your Show" },
+  { href: "/agreement", label: "Agreement" },
   { href: "/blog", label: "Journal" },
   { href: "/contact", label: "Contact" },
 ];

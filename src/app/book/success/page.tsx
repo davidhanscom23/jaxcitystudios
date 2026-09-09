@@ -46,9 +46,21 @@ export default async function SuccessPage({
           Booking ref · {params.booking_id}
         </p>
       )}
-      <Link href="/" className="btn btn-solid mt-10 inline-flex no-underline">
-        Home
-      </Link>
+      <div className="mt-10 flex flex-wrap gap-3">
+        <Link
+          href={
+            params.booking_id
+              ? `/agreement?bookingId=${encodeURIComponent(params.booking_id)}`
+              : "/agreement"
+          }
+          className="btn btn-solid no-underline"
+        >
+          Sign rental agreement
+        </Link>
+        <Link href="/" className="btn no-underline">
+          Home
+        </Link>
+      </div>
     </div>
   );
 }

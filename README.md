@@ -8,6 +8,7 @@ Website for **JaxCity Studios** — music recording and podcast production in Ja
 - PayPal Checkout deposits (Venmo via PayPal for eligible US payers)
 - Manual Zelle deposit path (no Zelle website API exists)
 - SQLite studio calendar (`data/jaxcity.db`) for room availability
+- Electronic rental agreement (autofill, e-sign, stored revisions)
 
 ## Develop
 
