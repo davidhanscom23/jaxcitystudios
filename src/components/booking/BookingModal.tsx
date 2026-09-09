@@ -827,9 +827,17 @@ export function BookingModal() {
               <p className="mt-4 text-sm text-muted">
                 Questions: {STUDIO.phone} · {STUDIO.email}
               </p>
-              <button type="button" className="btn btn-solid mt-6" onClick={closeBooking}>
-                Close
-              </button>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <a
+                  className="btn btn-solid no-underline"
+                  href={`/agreement?bookingId=${encodeURIComponent(bookingId)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}&room=${roomId}&date=${date}&start=${start}&hours=${hours}&total=${total}&deposit=${deposit}`}
+                >
+                  Sign rental agreement
+                </a>
+                <button type="button" className="btn" onClick={closeBooking}>
+                  Close
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -8,6 +8,7 @@ Website for **JaxCity Studios** — music recording and podcast production in Ja
 - PayPal Checkout deposits (Venmo via PayPal for eligible US payers)
 - Manual Zelle deposit path (no Zelle website API exists)
 - SQLite studio calendar (`data/jaxcity.db`) for room availability
+- Electronic rental agreement (autofill, e-sign, stored revisions)
 
 ## Develop
 
@@ -45,6 +46,16 @@ SQLite file at `data/jaxcity.db` (gitignored). Tables: `rooms`, `studio_hours`, 
 - Checkout holds the slot; PayPal capture confirms; Zelle stays held until manual confirm; cancel releases holds
 
 Default studio hours: **10 AM–2 AM** (overnight close), 30-minute slots, two-hour minimum.
+
+## Electronic rental agreement
+
+PDF source mirrored at `public/forms/rental-agreement-source.pdf`. Live form:
+
+- `/agreement` — autofill from booking selections, create draft
+- `/agreement/[id]?code=…` — review, update, e-sign (renter + optional studio owner)
+- `/agreement/lookup` — find saved agreements by email
+
+Policy blanks (cancellation notice, recording storage) live in `src/lib/rental-agreement.ts` (`AGREEMENT_POLICY`). Bump `AGREEMENT_TEMPLATE_VERSION` when legal text changes. Studio counter-sign uses `AGREEMENT_OWNER_CODE` (default `jaxcity`). Updating a signed agreement clears signatures and bumps revision.
 
 ## Scripts
 
