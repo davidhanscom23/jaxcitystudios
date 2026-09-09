@@ -34,7 +34,7 @@ export default async function BlogPostPage({
 
   return (
     <article className="wide-margin section-space">
-      <p className="font-caps text-[0.7rem] text-muted">
+      <p className="font-caps text-[18px] text-muted">
         <Link href="/blog" className="no-underline">
           Journal
         </Link>{" "}
@@ -72,7 +72,7 @@ export default async function BlogPostPage({
         {post.sections.map((section, i) => (
           <section key={section.heading}>
             <div className="mb-8 flex items-center gap-4">
-              <span className="font-caps text-[0.65rem] text-muted">
+              <span className="font-caps text-[18px] text-muted">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <hr className="rule flex-1" />

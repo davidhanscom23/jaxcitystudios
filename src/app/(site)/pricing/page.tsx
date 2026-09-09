@@ -23,7 +23,7 @@ export const metadata = pageMeta({
 export default function PricingPage() {
   return (
     <div className="wide-margin section-space">
-      <p className="font-caps text-[0.7rem] text-muted">Rate card</p>
+      <p className="font-caps text-[18px] text-muted">Rate card</p>
       <h1 className="font-display crop-type mt-4 max-w-[14ch] text-[clamp(3rem,9vw,6.5rem)]">
         Upfront pricing
       </h1>
@@ -107,7 +107,7 @@ export default function PricingPage() {
               <p>{PACKAGES.partner.description}</p>
               <p className="mt-4 font-display text-3xl">
                 ${PACKAGES.partner.sampleMonthlyTotal}
-                <span className="font-caps ml-2 text-[0.65rem] text-muted">
+                <span className="font-caps ml-2 text-[18px] text-muted">
                   /mo sample
                 </span>
               </p>
@@ -136,7 +136,7 @@ export default function PricingPage() {
         </p>
         <div className="mt-8 overflow-x-auto border border-rule">
           <table className="w-full min-w-[28rem] text-left text-sm">
-            <thead className="border-b border-rule font-caps text-[0.65rem] text-muted">
+            <thead className="border-b border-rule font-caps text-[18px] text-muted">
               <tr>
                 <th className="px-4 py-3 font-medium">Room</th>
                 <th className="px-4 py-3 font-medium">Hourly</th>
@@ -210,7 +210,7 @@ function PackageCard({
 }) {
   return (
     <article className="flex flex-col border border-rule bg-charcoal p-6">
-      <p className="font-caps text-[0.62rem] text-accent">{badge}</p>
+      <p className="font-caps text-[18px] text-accent">{badge}</p>
       <h2 className="font-display mt-3 text-3xl">{name}</h2>
       <p className="mt-2 text-sm text-muted">{tagline}</p>
       <div className="mt-6 flex-1 text-paper-dim">{body}</div>

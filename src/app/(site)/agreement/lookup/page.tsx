@@ -10,7 +10,7 @@ export const metadata = pageMeta({
 export default function AgreementLookupPage() {
   return (
     <div className="wide-margin section-space">
-      <p className="font-caps text-[0.7rem] text-muted">Agreements</p>
+      <p className="font-caps text-[18px] text-muted">Agreements</p>
       <h1 className="font-display mt-4 text-4xl sm:text-5xl">Find yours</h1>
       <p className="mt-4 max-w-xl text-paper-dim">
         Enter the email used on the rental agreement to reopen drafts or signed

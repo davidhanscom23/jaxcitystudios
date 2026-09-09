@@ -132,7 +132,7 @@ export function AgreementStartForm({
         </p>
 
         <label className="block">
-          <span className="font-caps text-[0.65rem] text-muted">Renter name</span>
+          <span className="font-caps text-[18px] text-muted">Renter name</span>
           <input
             className="input mt-2"
             value={renterName}
@@ -141,7 +141,7 @@ export function AgreementStartForm({
           />
         </label>
         <label className="block">
-          <span className="font-caps text-[0.65rem] text-muted">Email</span>
+          <span className="font-caps text-[18px] text-muted">Email</span>
           <input
             type="email"
             className="input mt-2"
@@ -151,7 +151,7 @@ export function AgreementStartForm({
           />
         </label>
         <label className="block">
-          <span className="font-caps text-[0.65rem] text-muted">Phone</span>
+          <span className="font-caps text-[18px] text-muted">Phone</span>
           <input
             className="input mt-2"
             value={renterPhone}
@@ -159,7 +159,7 @@ export function AgreementStartForm({
           />
         </label>
         <label className="block">
-          <span className="font-caps text-[0.65rem] text-muted">Room</span>
+          <span className="font-caps text-[18px] text-muted">Room</span>
           <select
             className="select mt-2"
             value={roomId}
@@ -173,7 +173,7 @@ export function AgreementStartForm({
           </select>
         </label>
         <label className="block">
-          <span className="font-caps text-[0.65rem] text-muted">Session date</span>
+          <span className="font-caps text-[18px] text-muted">Session date</span>
           <input
             type="date"
             className="input mt-2"
@@ -183,7 +183,7 @@ export function AgreementStartForm({
           />
         </label>
         <label className="block">
-          <span className="font-caps text-[0.65rem] text-muted">Start time (24h for entry)</span>
+          <span className="font-caps text-[18px] text-muted">Start time (24h for entry)</span>
           <input
             className="input mt-2"
             value={startTime}
@@ -194,7 +194,7 @@ export function AgreementStartForm({
           />
         </label>
         <label className="block">
-          <span className="font-caps text-[0.65rem] text-muted">Hours</span>
+          <span className="font-caps text-[18px] text-muted">Hours</span>
           <select
             className="select mt-2"
             value={durationHours}
@@ -212,7 +212,7 @@ export function AgreementStartForm({
           </select>
         </label>
         <label className="block">
-          <span className="font-caps text-[0.65rem] text-muted">Session total ($)</span>
+          <span className="font-caps text-[18px] text-muted">Session total ($)</span>
           <input
             type="number"
             min={1}
@@ -235,7 +235,7 @@ export function AgreementStartForm({
       </form>
 
       <div className="border border-rule bg-charcoal/40 p-5 sm:p-8">
-        <p className="font-caps text-[0.65rem] text-muted">Live preview</p>
+        <p className="font-caps text-[18px] text-muted">Live preview</p>
         {preview ? (
           <div className="mt-4">
             <AgreementDocument fill={preview} />

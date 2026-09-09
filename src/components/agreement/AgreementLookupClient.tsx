@@ -44,7 +44,7 @@ export function AgreementLookupClient() {
     <div className="max-w-xl space-y-6">
       <form onSubmit={lookup} className="space-y-3">
         <label className="block">
-          <span className="font-caps text-[0.65rem] text-muted">
+          <span className="font-caps text-[18px] text-muted">
             Email on the agreement
           </span>
           <input
@@ -66,12 +66,12 @@ export function AgreementLookupClient() {
             <p className="text-paper">
               {h.fill.renterName} · {h.fill.roomName} · {h.fill.sessionDate}
             </p>
-            <p className="mt-1 font-caps text-[0.6rem] text-muted">
+            <p className="mt-1 font-caps text-[18px] text-muted">
               {h.status} · rev {h.revision} · code {h.accessCode}
             </p>
             <Link
               href={`/agreement/${h.id}?code=${encodeURIComponent(h.accessCode)}`}
-              className="mt-3 inline-block font-caps text-[0.7rem] text-cyan"
+              className="mt-3 inline-block font-caps text-[18px] text-cyan"
             >
               Open →
             </Link>

@@ -9,7 +9,7 @@ export function ServiceDetail({ service }: { service: Service }) {
   const { openBooking } = useBooking();
   return (
     <div className="wide-margin section-space">
-      <p className="font-caps text-[0.7rem] text-muted">
+      <p className="font-caps text-[18px] text-muted">
         <Link href="/lineup" className="no-underline">
           Lineup
         </Link>
@@ -30,11 +30,11 @@ export function ServiceDetail({ service }: { service: Service }) {
       </div>
       <div className="mt-12 grid gap-10 md:grid-cols-2">
         <div>
-          <h2 className="font-caps text-[0.7rem] text-muted">In the room</h2>
+          <h2 className="font-caps text-[18px] text-muted">In the room</h2>
           <p className="mt-3 text-lg text-paper-dim">{service.inTheRoom}</p>
         </div>
         <div>
-          <h2 className="font-caps text-[0.7rem] text-muted">In the session</h2>
+          <h2 className="font-caps text-[18px] text-muted">In the session</h2>
           <p className="mt-3 text-lg text-paper-dim">{service.inSession}</p>
         </div>
       </div>

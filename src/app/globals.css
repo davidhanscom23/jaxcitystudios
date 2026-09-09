@@ -22,6 +22,7 @@
   --glow-magenta: 0 0 18px rgba(255, 59, 154, 0.4);
   --background: var(--ink);
   --foreground: var(--paper);
+  --font-size-min: 18px;
 }
 
 @theme inline {
@@ -44,6 +45,11 @@
   --font-display: var(--font-display);
   --font-body: var(--font-body);
   --font-caps: var(--font-caps);
+  /* Site-wide floor: nothing smaller than 18px */
+  --text-xs: 1.125rem;
+  --text-sm: 1.125rem;
+  --text-base: 1.125rem;
+  --text-lg: 1.25rem;
 }
 
 * {
@@ -61,7 +67,7 @@ body {
     var(--ink);
   color: var(--paper);
   font-family: var(--font-body), "Newsreader", Georgia, serif;
-  font-size: 1.0625rem;
+  font-size: var(--font-size-min);
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
 }
@@ -244,7 +250,7 @@ a {
   font-family: var(--font-caps), "Barlow Condensed", sans-serif;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  font-size: 0.78rem;
+  font-size: var(--font-size-min);
   border-radius: 999px;
   box-shadow: 0 0 14px rgba(46, 230, 255, 0.2);
   transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease,
@@ -291,7 +297,7 @@ a {
   color: var(--paper);
   padding: 0.85rem 1rem;
   font-family: var(--font-body), Georgia, serif;
-  font-size: 1rem;
+  font-size: var(--font-size-min);
   border-radius: 0.5rem;
 }
 
@@ -312,7 +318,7 @@ a {
   font-family: var(--font-caps), sans-serif;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: 0.68rem;
+  font-size: var(--font-size-min);
   background: var(--graphite);
   border-radius: 999px;
 }

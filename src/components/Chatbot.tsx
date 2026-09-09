@@ -56,10 +56,10 @@ export function Chatbot() {
       {open && (
         <div className="flex h-[min(28rem,70vh)] w-[min(22rem,calc(100vw-2rem))] flex-col border border-rule bg-charcoal">
           <div className="flex items-center justify-between border-b border-rule px-4 py-3">
-            <p className="font-caps text-[0.7rem]">Rate desk</p>
+            <p className="font-caps text-[18px]">Rate desk</p>
             <button
               type="button"
-              className="font-caps text-[0.65rem] text-muted"
+              className="font-caps text-[18px] text-muted"
               onClick={() => setOpen(false)}
             >
               Close

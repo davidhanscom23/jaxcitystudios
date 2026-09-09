@@ -16,7 +16,7 @@ export default function BlogIndex() {
 
   return (
     <div className="wide-margin section-space">
-      <p className="font-caps text-[0.7rem] text-muted">Journal</p>
+      <p className="font-caps text-[18px] text-muted">Journal</p>
       <h1 className="font-display crop-type mt-4 text-[clamp(3rem,9vw,6rem)]">
         Neighborhood notes
       </h1>
@@ -43,7 +43,7 @@ export default function BlogIndex() {
                 />
               )}
             </div>
-            <p className="font-caps mt-5 text-[0.65rem] text-muted">
+            <p className="font-caps mt-5 text-[18px] text-muted">
               {post.neighborhood} · {post.date}
             </p>
             <h2 className="font-display mt-3 text-3xl leading-none group-hover:text-paper-dim">
@@ -66,7 +66,7 @@ export default function BlogIndex() {
                 {post.neighborhood.split(" ")[0]}
               </p>
             </div>
-            <p className="font-caps mt-5 text-[0.65rem] text-muted">
+            <p className="font-caps mt-5 text-[18px] text-muted">
               {post.neighborhood} · {post.date}
             </p>
             <h2 className="font-display mt-3 text-2xl">{post.title}</h2>

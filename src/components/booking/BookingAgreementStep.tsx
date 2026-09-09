@@ -56,7 +56,7 @@ export function BookingAgreementStep({
 
   return (
     <div>
-      <p className="font-caps text-[0.68rem] text-muted">Agreement</p>
+      <p className="font-caps text-[18px] text-muted">Agreement</p>
       <h2 className="font-display mt-2 text-[clamp(2rem,6vw,3.2rem)] leading-none">
         Rental agreement
       </h2>
@@ -82,7 +82,7 @@ export function BookingAgreementStep({
         </div>
       ) : (
         <div className="mt-6">
-          <p className="font-caps text-[0.65rem] text-muted">Renter e-sign</p>
+          <p className="font-caps text-[18px] text-muted">Renter e-sign</p>
           <div className="mt-2">
             <SignaturePad onChange={setSignature} disabled={busy} />
           </div>

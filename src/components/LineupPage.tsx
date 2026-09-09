@@ -28,7 +28,7 @@ export function LineupPage() {
 
   return (
     <div className="wide-margin section-space">
-      <p className="font-caps text-[0.7rem] text-muted">Lineup</p>
+      <p className="font-caps text-[18px] text-muted">Lineup</p>
       <h1 className="font-display crop-type mt-4 max-w-[12ch] text-[clamp(3rem,10vw,7rem)]">
         Eight ways in
       </h1>
@@ -38,7 +38,7 @@ export function LineupPage() {
       </p>
 
       <div id="music" className="mt-20 scroll-mt-28">
-        <h2 className="font-caps text-[0.72rem] text-muted">Music recording</h2>
+        <h2 className="font-caps text-[18px] text-muted">Music recording</h2>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {music.map((s) => (
             <ServiceCard key={s.id} service={s} onOpen={() => setActive(s)} />
@@ -47,7 +47,7 @@ export function LineupPage() {
       </div>
 
       <div id="podcast" className="mt-24 scroll-mt-28">
-        <h2 className="font-caps text-[0.72rem] text-muted">Podcast production</h2>
+        <h2 className="font-caps text-[18px] text-muted">Podcast production</h2>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {podcast.map((s) => (
             <ServiceCard key={s.id} service={s} onOpen={() => setActive(s)} />
@@ -57,7 +57,7 @@ export function LineupPage() {
 
       {/* All eight in order for SEO crawl of titles */}
       <div className="mt-24 border-t border-rule pt-16">
-        <h2 className="font-caps text-[0.72rem] text-muted">Full lineup</h2>
+        <h2 className="font-caps text-[18px] text-muted">Full lineup</h2>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {SERVICES.map((s) => (
             <ServiceCard key={`all-${s.id}`} service={s} onOpen={() => setActive(s)} compact />
@@ -89,7 +89,7 @@ export function LineupPage() {
             <div className="p-6 sm:p-8">
               <button
                 type="button"
-                className="font-caps text-[0.65rem] text-muted"
+                className="font-caps text-[18px] text-muted"
                 onClick={() => setActive(null)}
               >
                 Close
@@ -97,11 +97,11 @@ export function LineupPage() {
               <h2 id="service-modal-title" className="font-display mt-4 text-4xl">
                 {active.title}
               </h2>
-              <p className="mt-6 font-caps text-[0.65rem] text-muted">
+              <p className="mt-6 font-caps text-[18px] text-muted">
                 In the room
               </p>
               <p className="mt-2 text-paper-dim">{active.inTheRoom}</p>
-              <p className="mt-6 font-caps text-[0.65rem] text-muted">
+              <p className="mt-6 font-caps text-[18px] text-muted">
                 In the session
               </p>
               <p className="mt-2 text-paper-dim">{active.inSession}</p>

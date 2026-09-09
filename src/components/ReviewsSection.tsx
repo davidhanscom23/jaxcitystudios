@@ -12,18 +12,18 @@ function ReviewCard({ review }: { review: StudioReview }) {
     >
       <div>
         <p
-          className={`font-caps text-[0.62rem] tracking-[0.16em] ${
+          className={`font-caps text-[18px] tracking-[0.16em] ${
             review.side === "music" ? "text-magenta" : "text-cyan"
           }`}
         >
           {review.side === "music" ? "Music" : "Podcast"}
         </p>
-        <blockquote className="mt-4 text-[1.05rem] leading-snug text-paper-dim">
+        <blockquote className="mt-4 text-[18px] leading-snug text-paper-dim">
           “{review.quote}”
         </blockquote>
       </div>
       <footer className="mt-8 border-t border-rule pt-4">
-        <p className="font-caps text-[0.72rem] tracking-[0.14em] text-paper">
+        <p className="font-caps text-[18px] tracking-[0.14em] text-paper">
           {review.name}
         </p>
         <p className="mt-1 text-sm text-muted">{review.role}</p>
@@ -66,7 +66,7 @@ export function ReviewsSection() {
   return (
     <section className="section-space border-t border-rule">
       <div className="wide-margin">
-        <p className="font-caps text-[0.7rem] text-muted">Reviews</p>
+        <p className="font-caps text-[18px] text-muted">Reviews</p>
         <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-xl">
             <h2 className="font-display max-w-[16ch] text-4xl sm:text-5xl">

@@ -74,7 +74,7 @@ export function PlannerPage() {
 
   return (
     <div className="wide-margin section-space">
-      <p className="font-caps text-[0.7rem] text-muted no-print">Planner</p>
+      <p className="font-caps text-[18px] text-muted no-print">Planner</p>
       <h1 className="font-display crop-type mt-4 max-w-[12ch] text-[clamp(2.8rem,8vw,5.5rem)] no-print">
         Build Your Show
       </h1>
@@ -153,7 +153,7 @@ export function PlannerPage() {
                   className="w-full text-left no-print"
                   onClick={() => setActiveStage(id)}
                 >
-                  <p className="font-caps text-[0.65rem] text-muted">
+                  <p className="font-caps text-[18px] text-muted">
                     {mins} min
                   </p>
                   <h2 className="font-display text-2xl sm:text-3xl">
@@ -169,7 +169,7 @@ export function PlannerPage() {
                   </p>
                 </button>
                 <div className="hidden print:block">
-                  <p className="font-caps text-[0.65rem]">{mins} min</p>
+                  <p className="font-caps text-[18px]">{mins} min</p>
                   <h2 className="text-xl font-bold">{STAGE_META[id].title}</h2>
                   <p className="text-sm">
                     {cfg.format} · {cfg.hosts}H/{cfg.guests}G · {cfg.cameras} cam
@@ -183,7 +183,7 @@ export function PlannerPage() {
         {/* Totals */}
         <section className="mt-8 grid gap-6 border-t border-rule pt-8 md:grid-cols-2">
           <div>
-            <h3 className="font-caps text-[0.7rem] text-muted">Studio math</h3>
+            <h3 className="font-caps text-[18px] text-muted">Studio math</h3>
             <ul className="mt-4 space-y-2 text-paper-dim">
               <li>
                 Booked studio hours:{" "}
@@ -219,7 +219,7 @@ export function PlannerPage() {
             </ul>
           </div>
           <div>
-            <h3 className="font-caps text-[0.7rem] text-muted">
+            <h3 className="font-caps text-[18px] text-muted">
               Running total
             </h3>
             <p className="font-display mt-4 text-5xl">${result.total}</p>
@@ -233,7 +233,7 @@ export function PlannerPage() {
 
         {/* Deliverables */}
         <section className="mt-10 border-t border-rule pt-8">
-          <h3 className="font-caps text-[0.7rem] text-muted">Deliverables</h3>
+          <h3 className="font-caps text-[18px] text-muted">Deliverables</h3>
           <div className="mt-4 flex flex-wrap gap-2">
             {DELIVERABLE_PRESETS.map((d) => {
               const on = deliverables.includes(d.id);
@@ -369,7 +369,7 @@ function StagePicker({
         className="w-full max-w-lg border border-rule bg-charcoal p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="font-caps text-[0.65rem] text-muted">Stage picker</p>
+        <p className="font-caps text-[18px] text-muted">Stage picker</p>
         <h3 className="font-display mt-2 text-3xl">
           {STAGE_META[stageId].title}
         </h3>
@@ -469,7 +469,7 @@ function Field({
 }) {
   return (
     <label className="block text-sm">
-      <span className="font-caps text-[0.62rem] text-muted">{label}</span>
+      <span className="font-caps text-[18px] text-muted">{label}</span>
       <div className="mt-1">{children}</div>
     </label>
   );

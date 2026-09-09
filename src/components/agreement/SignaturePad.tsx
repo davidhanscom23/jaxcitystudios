@@ -97,7 +97,7 @@ export function SignaturePad({ disabled, onChange }: Props) {
       />
       <button
         type="button"
-        className="mt-2 font-caps text-[0.65rem] text-muted hover:text-paper"
+        className="mt-2 font-caps text-[18px] text-muted hover:text-paper"
         onClick={clear}
         disabled={disabled}
       >

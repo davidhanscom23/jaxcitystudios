@@ -19,7 +19,7 @@ export default async function AgreementDetailPage({
 
   return (
     <div className="wide-margin section-space">
-      <p className="font-caps text-[0.7rem] text-muted">Agreement</p>
+      <p className="font-caps text-[18px] text-muted">Agreement</p>
       <h1 className="font-display mt-4 text-4xl sm:text-5xl">Review & sign</h1>
       <div className="mt-10">
         <AgreementEditor id={id} initialCode={code} />
