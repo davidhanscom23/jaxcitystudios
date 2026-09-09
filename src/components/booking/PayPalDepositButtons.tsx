@@ -34,6 +34,7 @@ export function PayPalDepositButtons({
   const hostRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   const [loadingSdk, setLoadingSdk] = useState(true);
+  const [sdkError, setSdkError] = useState("");
 
   useEffect(() => {
     if (!clientId) {
@@ -62,10 +63,10 @@ export function PayPalDepositButtons({
     };
     script.onerror = () => {
       setLoadingSdk(false);
-      onError("Could not load PayPal. Check your client ID.");
+      setSdkError("Could not load PayPal. Check your client ID.");
     };
     document.body.appendChild(script);
-  }, [clientId, onError]);
+  }, [clientId]);
 
   useEffect(() => {
     if (!ready || !window.paypal || !hostRef.current) return;
@@ -115,6 +116,7 @@ export function PayPalDepositButtons({
       {loadingSdk && (
         <p className="text-sm text-muted">Loading PayPal / Venmo…</p>
       )}
+      {sdkError && <p className="text-sm text-accent">{sdkError}</p>}
       <div ref={hostRef} className="min-h-[3rem]" />
       <p className="font-caps text-[0.6rem] text-muted">
         PayPal Checkout · Venmo appears for eligible US payers
