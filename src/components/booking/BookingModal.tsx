@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -10,6 +11,7 @@ import {
 } from "react";
 import { useBooking } from "@/components/booking/BookingProvider";
 import { RoomName } from "@/components/RoomName";
+import { PayPalDepositButtons } from "@/components/booking/PayPalDepositButtons";
 import {
   ADDONS,
   DEPOSIT,
@@ -22,6 +24,7 @@ import {
   engineeredTotal,
   type RoomId,
 } from "@/lib/rates";
+import { PUBLIC_PAYMENTS } from "@/lib/payments-public";
 
 type Step =
   | "date-room"
@@ -88,6 +91,9 @@ export function BookingModal() {
   const [studioClose, setStudioClose] = useState("22:00");
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availabilityError, setAvailabilityError] = useState("");
+  const [payMethod, setPayMethod] = useState<"paypal" | "zelle">("paypal");
+  const [bookingId, setBookingId] = useState("");
+  const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "";
 
   useEffect(() => {
     if (!open) return;
@@ -99,6 +105,8 @@ export function BookingModal() {
     setStart("");
     setAvailableStarts([]);
     setBookedBlocks([]);
+    setBookingId("");
+    setPayMethod("paypal");
     if (initialRoomId) setRoomId(initialRoomId);
     if (planner?.roomId) setRoomId(planner.roomId);
     if (initialPackageId) setPackageId(initialPackageId);
@@ -209,7 +217,88 @@ export function BookingModal() {
     if (idx > 0) setStep(STEPS[idx - 1]);
   }
 
-  async function payDeposit() {
+  const createPayPalCheckout = useCallback(async () => {
+    const res = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date,
+        roomId,
+        packageId,
+        start,
+        end,
+        hours,
+        name,
+        email,
+        phone,
+        clientType,
+        selectedAddons,
+        total,
+        deposit,
+        balance,
+        planner,
+        paymentMethod: "paypal",
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Could not start PayPal checkout");
+    }
+    if (!data.orderId) {
+      throw new Error(data.error || "PayPal order missing");
+    }
+    setBookingId(data.bookingId || "");
+    return {
+      orderId: data.orderId as string,
+      bookingId: data.bookingId as string,
+    };
+  }, [
+    date,
+    roomId,
+    packageId,
+    start,
+    end,
+    hours,
+    name,
+    email,
+    phone,
+    clientType,
+    selectedAddons,
+    total,
+    deposit,
+    balance,
+    planner,
+  ]);
+
+  const onPayPalApproved = useCallback(
+    async (info: { orderId: string; bookingId: string }) => {
+      setBusy(true);
+      setError("");
+      try {
+        const res = await fetch("/api/paypal/capture", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(info),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "Could not capture PayPal payment");
+          return;
+        }
+        setDoneMsg(
+          `Deposit received via PayPal/Venmo. Booking ${data.bookingId || info.bookingId} is confirmed on the calendar. Remaining balance $${balance} due on arrival.`,
+        );
+        setStep("done");
+      } catch {
+        setError("Network error capturing PayPal payment.");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [balance],
+  );
+
+  async function submitZelleHold() {
     setBusy(true);
     setError("");
     try {
@@ -232,22 +321,21 @@ export function BookingModal() {
           deposit,
           balance,
           planner,
+          paymentMethod: "zelle",
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Checkout failed.");
-        setBusy(false);
+        setError(data.error || "Could not hold this slot for Zelle.");
         return;
       }
-      if (data.url) {
-        window.location.href = data.url;
-        return;
-      }
-      setDoneMsg(data.message || "Deposit session created.");
+      setBookingId(data.bookingId || "");
+      setDoneMsg(
+        `Slot held pending Zelle. Send $${deposit} to ${PUBLIC_PAYMENTS.zelleDestination} (name: ${PUBLIC_PAYMENTS.zelleName}). Include your name and ${date} ${start} in the memo. Remaining $${balance} due on arrival. Ref: ${data.bookingId}`,
+      );
       setStep("done");
     } catch {
-      setError("Network error starting Stripe Checkout.");
+      setError("Network error starting Zelle hold.");
     } finally {
       setBusy(false);
     }
@@ -584,8 +672,18 @@ export function BookingModal() {
               eyebrow="Deposit"
               title="Lock the date"
               onBack={() => backFrom("checkout")}
-              onNext={payDeposit}
-              nextLabel={busy ? "Starting Checkout…" : `Pay $${deposit} deposit`}
+              onNext={
+                payMethod === "zelle"
+                  ? submitZelleHold
+                  : null
+              }
+              nextLabel={
+                payMethod === "zelle"
+                  ? busy
+                    ? "Holding slot…"
+                    : `Hold slot · pay $${deposit} by Zelle`
+                  : undefined
+              }
               error={error}
             >
               <p className="text-paper-dim">{DEPOSIT.policy}</p>
@@ -593,15 +691,90 @@ export function BookingModal() {
                 <Row label="Session total" value={`$${total}`} />
                 <Row label="Deposit due now (50%)" value={`$${deposit}`} />
                 <Row label="Balance on arrival" value={`$${balance}`} />
-                <Row label="Room" value={<RoomName roomId={roomId} size="sm" className="text-sm" />} />
+                <Row
+                  label="Room"
+                  value={<RoomName roomId={roomId} size="sm" className="text-sm" />}
+                />
                 <Row label="Date" value={date} />
                 <Row label="Time" value={`${start}–${end} (${hours}h)`} />
               </dl>
-              <p className="mt-4 text-sm text-muted">
-                Stripe test mode until you paste your live secret key into{" "}
-                <code className="text-paper-dim">STRIPE_LIVE_SECRET_KEY</code>{" "}
-                (see <code className="text-paper-dim">.env.example</code>).
-              </p>
+
+              <div className="mt-6 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  className={`border px-3 py-3 font-caps text-[0.68rem] ${
+                    payMethod === "paypal"
+                      ? "border-cyan bg-graphite text-cyan"
+                      : "border-rule"
+                  }`}
+                  onClick={() => {
+                    setPayMethod("paypal");
+                    setError("");
+                  }}
+                >
+                  PayPal / Venmo
+                </button>
+                <button
+                  type="button"
+                  className={`border px-3 py-3 font-caps text-[0.68rem] ${
+                    payMethod === "zelle"
+                      ? "border-cyan bg-graphite text-cyan"
+                      : "border-rule"
+                  }`}
+                  onClick={() => {
+                    setPayMethod("zelle");
+                    setError("");
+                  }}
+                >
+                  Zelle
+                </button>
+              </div>
+
+              {payMethod === "paypal" && (
+                <div className="mt-4">
+                  <p className="mb-2 text-sm text-muted">
+                    Pay the ${deposit} deposit with PayPal. Venmo shows for
+                    eligible US buyers inside PayPal Checkout.
+                    {PUBLIC_PAYMENTS.venmoHandle
+                      ? ` Studio Venmo: ${PUBLIC_PAYMENTS.venmoHandle}.`
+                      : ""}
+                  </p>
+                  <PayPalDepositButtons
+                    clientId={paypalClientId}
+                    deposit={deposit}
+                    createOrder={createPayPalCheckout}
+                    onApproved={onPayPalApproved}
+                    onError={(message) => setError(message)}
+                  />
+                </div>
+              )}
+
+              {payMethod === "zelle" && (
+                <div className="mt-4 border border-rule bg-graphite p-4 text-sm text-paper-dim">
+                  <p className="font-caps text-[0.65rem] text-cyan">
+                    Manual Zelle — no website API
+                  </p>
+                  <p className="mt-3">
+                    Send <strong className="text-paper">${deposit}</strong> via
+                    Zelle to{" "}
+                    <strong className="text-paper">
+                      {PUBLIC_PAYMENTS.zelleDestination}
+                    </strong>
+                    {PUBLIC_PAYMENTS.zelleName
+                      ? ` (${PUBLIC_PAYMENTS.zelleName})`
+                      : ""}
+                    .
+                  </p>
+                  <p className="mt-2">
+                    Memo: your name · {date} · {start}. Remaining ${balance} due
+                    on arrival. The studio confirms the calendar hold after the
+                    transfer posts.
+                  </p>
+                  <p className="mt-2 text-muted">
+                    Also reachable at {STUDIO.phone} / {STUDIO.email}.
+                  </p>
+                </div>
+              )}
             </StepShell>
           )}
 
@@ -610,6 +783,11 @@ export function BookingModal() {
               <p className="font-caps text-[0.68rem] text-accent">Booked path</p>
               <h2 className="font-display mt-3 text-4xl">Deposit next</h2>
               <p className="mt-4 text-paper-dim">{doneMsg}</p>
+              {bookingId && (
+                <p className="mt-3 font-caps text-[0.65rem] text-muted">
+                  Ref · {bookingId}
+                </p>
+              )}
               <p className="mt-4 text-sm text-muted">
                 Questions: {STUDIO.phone} · {STUDIO.email}
               </p>
@@ -662,7 +840,7 @@ function StepShell({
   title: string;
   children: ReactNode;
   onBack: (() => void) | null;
-  onNext: ((e?: FormEvent) => void) | (() => void);
+  onNext: ((e?: FormEvent) => void) | (() => void) | null;
   nextLabel?: string;
   secondary?: { label: string; onClick: () => void };
   error?: string;
@@ -686,9 +864,11 @@ function StepShell({
             {secondary.label}
           </button>
         )}
-        <button type="button" className="btn btn-solid" onClick={() => onNext()}>
-          {nextLabel}
-        </button>
+        {onNext && (
+          <button type="button" className="btn btn-solid" onClick={() => onNext()}>
+            {nextLabel}
+          </button>
+        )}
       </div>
     </div>
   );

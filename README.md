@@ -5,18 +5,36 @@ Website for **JaxCity Studios** — music recording and podcast production in Ja
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind CSS v4
-- Stripe Checkout for 50% deposits (test mode by default)
+- PayPal Checkout deposits (Venmo via PayPal for eligible US payers)
+- Manual Zelle deposit path (no Zelle website API exists)
 - SQLite studio calendar (`data/jaxcity.db`) for room availability
 
 ## Develop
 
 ```bash
 npm install
-cp .env.example .env.local
-# Add STRIPE_SECRET_KEY=sk_test_... for deposit checkout
-npm run db:init   # creates data/jaxcity.db + sample booked slots
+cp env.example .env.local
+# Add PayPal sandbox client id + secret
+npm run db:init
 npm run dev
 ```
+
+## Payments — PayPal, Venmo, Zelle
+
+| Method | How it works |
+| --- | --- |
+| **PayPal** | Live checkout via PayPal Orders API + JS buttons |
+| **Venmo** | Shown inside PayPal Checkout when `enable-funding=venmo` (US, eligible accounts) |
+| **Zelle** | Manual only — site shows send-to instructions and holds the room until the studio confirms |
+
+Paste credentials into `.env.local` (see `env.example`):
+
+- `NEXT_PUBLIC_PAYPAL_CLIENT_ID`
+- `PAYPAL_CLIENT_SECRET`
+- `PAYPAL_MODE=sandbox` or `live`
+- Optional: `NEXT_PUBLIC_VENMO_HANDLE`, `NEXT_PUBLIC_ZELLE_DESTINATION` (defaults to `jaxcitystudios@gmail.com`)
+
+Stripe has been removed from this project.
 
 ## Studio availability database
 
@@ -24,18 +42,9 @@ SQLite file at `data/jaxcity.db` (gitignored). Tables: `rooms`, `studio_hours`, 
 
 - `GET /api/availability?room=venus&date=YYYY-MM-DD&hours=2` — open start times only
 - Booking modal loads that list and will not offer taken slots
-- Checkout re-checks the calendar, creates a `held` booking, then confirms after Stripe success
+- Checkout holds the slot; PayPal capture confirms; Zelle stays held until manual confirm; cancel releases holds
 
-Default studio hours (sample, editable in `studio_hours`): **10:00–22:00**, 30-minute slots, two-hour minimum.
-
-Optional: set `DATABASE_PATH` to put the DB somewhere else.
-## Stripe — where to paste your live key
-
-**One instruction:** paste your live Stripe secret key into the environment variable named **`STRIPE_LIVE_SECRET_KEY`** (in `.env.local` or your host’s secret store), set `STRIPE_MODE=live`, and set `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` to your `pk_live_...` key.
-
-Until then, use `STRIPE_SECRET_KEY` with `sk_test_...` and keep `STRIPE_MODE=test`. Checkout talks to real Stripe Checkout in test mode; it does **not** silently fake a successful payment. Without a key, the Book → Pay deposit step returns a clear configuration error.
-
-Deposit checkout is implemented with Next.js Route Handlers + Stripe Checkout (Lovable Cloud was not available in this environment).
+Default studio hours (sample, editable in DB): **10:00–22:00**, 30-minute slots, two-hour minimum.
 
 ## Scripts
 
