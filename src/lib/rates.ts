@@ -89,6 +89,7 @@ export const DEPOSIT = {
 
 /** Real intro promotion from the studio rate card. First session only. */
 export const INTRO_PROMO = {
+  id: "intro-2h-80",
   label: "2 hours for $80",
   hours: 2,
   price: 80,
@@ -195,6 +196,26 @@ export function engineeredTotal(
       ? ENGINEERED.firstTimeHourly
       : ENGINEERED.returningHourly;
   return h * rate;
+}
+
+/**
+ * Engineered session subtotal, optionally applying the one-time intro promo
+ * (exactly INTRO_PROMO.hours at INTRO_PROMO.price for a first-time client).
+ */
+export function sessionStudioTotal(opts: {
+  hours: number;
+  clientType: "first-time" | "returning";
+  applyIntroPromo?: boolean;
+}): number {
+  const h = Math.max(opts.hours, ENGINEERED.minimumHours);
+  if (
+    opts.applyIntroPromo &&
+    opts.clientType === "first-time" &&
+    h === INTRO_PROMO.hours
+  ) {
+    return INTRO_PROMO.price;
+  }
+  return engineeredTotal(opts.hours, opts.clientType);
 }
 
 export function roomOnlyTotal(roomId: RoomId, hours: number): number {

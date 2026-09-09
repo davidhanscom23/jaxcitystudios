@@ -91,6 +91,9 @@ export function getDb(): Database.Database {
   if (!names.has("payment_ref")) {
     db.exec("ALTER TABLE bookings ADD COLUMN payment_ref TEXT");
   }
+  if (!names.has("promo_id")) {
+    db.exec("ALTER TABLE bookings ADD COLUMN promo_id TEXT");
+  }
 
   // Rental agreements table (electronic form + signatures)
   db.exec(`
