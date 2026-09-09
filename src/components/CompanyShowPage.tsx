@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import {
@@ -107,19 +108,56 @@ export function CompanyShowPage() {
 
       {/* Host */}
       <section className="section-space border-t border-rule bg-graphite">
-        <div className="wide-margin max-w-3xl">
-          <p className="font-caps text-[18px] text-magenta">Host</p>
-          <h2 className="font-display mt-4 text-4xl sm:text-5xl">
-            {COMPANY_SHOW.host.name}
-          </h2>
-          <p className="font-caps mt-2 text-[18px] text-muted">
-            {COMPANY_SHOW.host.title}
-          </p>
-          <p className="mt-6 text-lg text-paper-dim">{COMPANY_SHOW.host.blurb}</p>
-          <p className="mt-4 text-paper-dim">
-            Additional hosts may join later. Soft launch sessions are hosted by{" "}
-            {COMPANY_SHOW.host.name}.
-          </p>
+        <div className="wide-margin grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
+          <div>
+            <p className="font-caps text-[18px] text-magenta">Host</p>
+            <h2 className="font-display mt-4 text-4xl sm:text-5xl">
+              {COMPANY_SHOW.host.name}
+            </h2>
+            <p className="font-caps mt-2 text-[18px] text-muted">
+              {COMPANY_SHOW.host.title}
+            </p>
+            <p className="mt-6 text-lg text-paper-dim">
+              {COMPANY_SHOW.host.blurb}
+            </p>
+            {COMPANY_SHOW.host.bio.map((paragraph) => (
+              <p key={paragraph.slice(0, 48)} className="mt-4 text-paper-dim">
+                {paragraph}
+              </p>
+            ))}
+            <ul className="mt-8 space-y-2 border-t border-rule pt-6">
+              {COMPANY_SHOW.host.highlights.map((item) => (
+                <li
+                  key={item}
+                  className="font-caps text-[18px] tracking-[0.08em] text-cyan"
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-8 text-paper-dim">
+              Soft launch sessions are hosted by {COMPANY_SHOW.host.name}.{" "}
+              <a
+                href={COMPANY_SHOW.host.siteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cyan"
+              >
+                More at davidhanscom.com
+              </a>
+              .
+            </p>
+          </div>
+          <div className="photo-wrap neon-frame-pink relative aspect-[3/4] w-full overflow-hidden lg:justify-self-end lg:max-w-md">
+            <Image
+              src={COMPANY_SHOW.host.photo}
+              alt={COMPANY_SHOW.host.photoAlt}
+              fill
+              className="object-cover object-[center_20%]"
+              sizes="(max-width: 1024px) 100vw, 28rem"
+              priority={false}
+            />
+          </div>
         </div>
       </section>
 

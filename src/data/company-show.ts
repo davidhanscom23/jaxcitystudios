@@ -12,8 +12,26 @@ export const COMPANY_SHOW = {
   host: {
     name: "David Hanscom",
     title: "Host & producer",
+    photo: "/images/host-david-hanscom.jpg",
+    photoAlt:
+      "David Hanscom in the studio with a broadcast microphone — host of The Company Show",
+    siteUrl: "https://davidhanscom.com",
     blurb:
       "David runs the interview, keeps executives comfortable, and steers the conversation so your company sounds sharp without reading a script.",
+    bio: [
+      "David Hanscom is a Jacksonville-based speaker, entertainer, and educator with more than two decades leading high-impact live experiences. He founded Y? Entertainment in 1998, co-founded Vident Productions in 2023, and brings that same command of a room to The Company Show — so owners and executives can talk, not produce.",
+      "A 2025 DJ Hall of Fame inductee and the Jacksonville Jaguars’ official DJ for 12 years (1999–2010), David built fan-experience strategies for major sports audiences and headlined high-stakes stages — including Super Bowl XXXIX — sharing bills with artists like Wu-Tang Clan, Ice Cube, Snoop Dogg, and Naughty by Nature. He also leads as President (2024 & 2025) of Meeting Professionals International’s award-winning North Florida chapter.",
+      "As a host, that résumé shows up as presence under pressure: reading people, asking sharper follow-ups, and turning expertise into a conversation Northeast Florida buyers actually want to watch.",
+    ],
+    highlights: [
+      "2025 DJ Hall of Fame inductee",
+      "Official DJ, Jacksonville Jaguars (12 years)",
+      "Super Bowl XXXIX headlining DJ talent",
+      "President, MPI North Florida (2024 & 2025)",
+      "Founder, Y? Entertainment (1998)",
+      "Co-founder, Vident Productions (2023)",
+      "AI keynotes & experiential corporate education",
+    ],
   },
   founding: {
     id: "founding-company-program",
