@@ -13,13 +13,13 @@ export function HomePage() {
     <>
       {/* HERO — B&W session photo + Press Record */}
       <section className="relative min-h-[100svh] overflow-hidden">
-        <div className="photo-wrap hero-photo absolute inset-0">
+        <div className="photo-wrap hero-photo absolute inset-0 z-0 min-h-[100svh] w-full">
           <Image
             src="/images/hero-session-bw.jpg"
             alt="Black-and-white recording studio session — engineer at the console, vocal booth beyond the glass"
             fill
             priority
-            className="object-cover object-[center_55%]"
+            className="object-cover object-center"
             sizes="100vw"
           />
         </div>
