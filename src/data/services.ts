@@ -17,7 +17,7 @@ export const SERVICES: Service[] = [
     slug: "music-tracking",
     title: "Music tracking",
     short: "Vocals, instruments, full band takes — captured with an engineer on the session.",
-    image: "/images/lineup-music-tracking.png",
+    image: "/images/studio-session-purple.jpg",
     inTheRoom:
       "It sounds like a take that breathes. Quiet floors, honest monitors, and an engineer riding levels so you stay in the performance.",
     inSession:
@@ -36,7 +36,7 @@ export const SERVICES: Service[] = [
     slug: "mixing-and-mastering",
     title: "Mixing and mastering",
     short: "Finish the record in the same building that tracked it.",
-    image: "/images/lineup-mixing.png",
+    image: "/images/studio-session-red.jpg",
     inTheRoom:
       "Hands on the console, meters moving, decisions made by ear — not by a template dumped overnight.",
     inSession:
@@ -112,7 +112,7 @@ export const SERVICES: Service[] = [
     slug: "voiceover-and-audiobook",
     title: "Voiceover and audiobook",
     short: "Quiet booths, long takes, narration that holds.",
-    image: "/images/lineup-voiceover.png",
+    image: "/images/studio-neumann-mic.jpg",
     inTheRoom:
       "Close, dry, controlled. Breaths managed, pages turned soft, the voice stays front.",
     inSession:
