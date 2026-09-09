@@ -142,17 +142,21 @@ a {
   background:
     linear-gradient(
       105deg,
-      rgba(5, 5, 8, 0.72) 0%,
-      rgba(5, 5, 8, 0.35) 42%,
-      rgba(5, 5, 8, 0.2) 70%,
-      rgba(5, 5, 8, 0.45) 100%
+      rgba(5, 5, 8, 0.55) 0%,
+      rgba(5, 5, 8, 0.2) 48%,
+      rgba(5, 5, 8, 0.08) 72%,
+      rgba(5, 5, 8, 0.28) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(5, 5, 8, 0.25) 0%,
-      rgba(5, 5, 8, 0.1) 35%,
-      rgba(5, 5, 8, 0.78) 100%
+      rgba(5, 5, 8, 0.15) 0%,
+      rgba(5, 5, 8, 0.05) 40%,
+      rgba(5, 5, 8, 0.62) 100%
     );
+}
+
+.photo-wrap.hero-photo img {
+  filter: contrast(1.08) brightness(0.92);
 }
 
 .duotone {
