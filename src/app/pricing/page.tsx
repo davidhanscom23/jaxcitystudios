@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 import {
   DAY_RATE,
@@ -34,6 +35,17 @@ export default function PricingPage() {
         their own engineer, and are the hourly companion to the $
         {DAY_RATE.startingAt} day rate. The two do not stack.
       </p>
+
+      <div className="photo-wrap neon-frame relative mt-12 aspect-[21/9] min-h-[12rem] overflow-hidden sm:mt-16">
+        <Image
+          src="/images/studio-session-purple.jpg"
+          alt="Engineered session at JaxCity Studios — control room desk, dual monitors, booth beyond the glass"
+          fill
+          className="object-cover object-[center_40%]"
+          sizes="100vw"
+          priority
+        />
+      </div>
 
       <div className="mt-16 grid gap-6 lg:grid-cols-3">
         <PackageCard

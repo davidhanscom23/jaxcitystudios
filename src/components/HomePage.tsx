@@ -64,10 +64,10 @@ export function HomePage() {
           <article>
             <div className="photo-wrap neon-frame relative aspect-[4/5] overflow-hidden">
               <Image
-                src="/images/studio-control.jpg"
-                alt="Control room desk ready for a music session"
+                src="/images/studio-session-purple.jpg"
+                alt="Engineered music session in the control room — DAW open, booth lit beyond the glass"
                 fill
-                className="object-cover object-center"
+                className="object-cover object-[center_35%]"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
             </div>
@@ -167,12 +167,12 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Real lounge cinematic */}
+      {/* Session in progress — real control-room night */}
       <section className="relative min-h-[70vh]">
         <div className="photo-wrap absolute inset-0">
           <Image
-            src="/images/studio-lounge.jpg"
-            alt="JaxCity Studios lounge and recording booth with red and blue session lighting"
+            src="/images/studio-session-red.jpg"
+            alt="Engineer and client at the JaxCity Studios console under magenta session lighting"
             fill
             className="object-cover object-center"
             sizes="100vw"
