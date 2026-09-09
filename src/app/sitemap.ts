@@ -7,6 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes = [
     "",
     "/lineup",
+    "/company-show",
     "/pricing",
     "/planner",
     "/blog",
@@ -17,7 +18,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${siteUrl}${path || "/"}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
-    priority: path === "" ? 1 : path === "/app" ? 0.9 : 0.8,
+    priority:
+      path === ""
+        ? 1
+        : path === "/company-show" || path === "/app"
+          ? 0.9
+          : 0.8,
   }));
 
   const services = SERVICES.map((s) => ({

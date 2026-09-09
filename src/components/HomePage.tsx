@@ -47,8 +47,8 @@ export function HomePage() {
               <Link href="/lineup#music" className="btn btn-solid no-underline">
                 Music recording
               </Link>
-              <Link href="/lineup#podcast" className="btn no-underline">
-                Podcast production
+              <Link href="/company-show" className="btn no-underline">
+                The Company Show
               </Link>
             </div>
           </div>
@@ -97,15 +97,24 @@ export function HomePage() {
               Podcast
             </h2>
             <p className="mt-4 max-w-md text-paper-dim">
-              In-studio audio, multi-camera video, remote guests, full
-              production. Built for artists and business owners alike.
+              À la carte studio sessions — or The Company Show: you show up once
+              a month, we host, record, edit, clip, and publish a full content
+              batch for Northeast Florida businesses.
             </p>
-            <Link
-              href="/lineup#podcast"
-              className="mt-6 inline-block font-caps text-[18px] text-magenta"
-            >
-              See podcast lineup →
-            </Link>
+            <div className="mt-6 flex flex-wrap gap-4">
+              <Link
+                href="/company-show"
+                className="font-caps text-[18px] text-magenta"
+              >
+                The Company Show →
+              </Link>
+              <Link
+                href="/lineup#podcast"
+                className="font-caps text-[18px] text-muted"
+              >
+                Podcast lineup →
+              </Link>
+            </div>
           </article>
         </div>
       </section>
