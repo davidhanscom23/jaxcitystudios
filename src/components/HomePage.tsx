@@ -11,15 +11,15 @@ export function HomePage() {
 
   return (
     <>
-      {/* HERO — real control room + Press Record */}
+      {/* HERO — B&W session photo + Press Record */}
       <section className="relative min-h-[100svh] overflow-hidden">
-        <div className="photo-wrap absolute inset-0">
+        <div className="photo-wrap hero-photo absolute inset-0">
           <Image
-            src="/images/studio-control.jpg"
-            alt="JaxCity Studios control room with console, monitors, and magenta session lighting"
+            src="/images/hero-session-bw.jpg"
+            alt="Black-and-white recording studio session — engineer at the console, vocal booth beyond the glass"
             fill
             priority
-            className="object-cover object-[center_40%]"
+            className="object-cover object-[center_55%]"
             sizes="100vw"
           />
         </div>

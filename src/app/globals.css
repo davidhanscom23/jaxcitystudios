@@ -138,6 +138,23 @@ a {
   );
 }
 
+.photo-wrap.hero-photo::after {
+  background:
+    linear-gradient(
+      105deg,
+      rgba(5, 5, 8, 0.72) 0%,
+      rgba(5, 5, 8, 0.35) 42%,
+      rgba(5, 5, 8, 0.2) 70%,
+      rgba(5, 5, 8, 0.45) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(5, 5, 8, 0.25) 0%,
+      rgba(5, 5, 8, 0.1) 35%,
+      rgba(5, 5, 8, 0.78) 100%
+    );
+}
+
 .duotone {
   filter: grayscale(1) contrast(1.08) brightness(0.92);
   mix-blend-mode: luminosity;
