@@ -138,7 +138,7 @@ export function OfferPopup() {
       >
         {step === "email" && (
           <>
-            <p className="font-caps text-[0.68rem] text-accent">Today’s move</p>
+            <p className="font-caps text-[18px] text-accent">Today’s move</p>
             <h2 id="offer-title" className="font-display mt-3 text-3xl">
               {INTRO_PROMO.label}
             </h2>
@@ -170,7 +170,7 @@ export function OfferPopup() {
             </form>
             <button
               type="button"
-              className="mt-4 font-caps text-[0.65rem] text-muted"
+              className="mt-4 font-caps text-[18px] text-muted"
               onClick={dismiss}
             >
               Not now
@@ -180,7 +180,7 @@ export function OfferPopup() {
 
         {step === "phone" && (
           <>
-            <p className="font-caps text-[0.68rem] text-accent">One more beat</p>
+            <p className="font-caps text-[18px] text-accent">One more beat</p>
             <h2 id="offer-title" className="font-display mt-3 text-3xl">
               Stack a little more
             </h2>
@@ -208,7 +208,7 @@ export function OfferPopup() {
             </form>
             <button
               type="button"
-              className="mt-4 font-caps text-[0.65rem] text-muted"
+              className="mt-4 font-caps text-[18px] text-muted"
               onClick={() => {
                 sessionStorage.setItem("jaxcity-offer-seen", "1");
                 setStep("done");

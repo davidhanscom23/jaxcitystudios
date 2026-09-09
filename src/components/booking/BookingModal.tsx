@@ -555,14 +555,14 @@ export function BookingModal() {
         {isApp ? (
           <div className="flex items-center justify-between border-b border-rule px-4 py-3">
             <div>
-              <p className="font-caps text-[0.62rem] tracking-[0.16em] text-accent">
+              <p className="font-caps text-[18px] tracking-[0.16em] text-accent">
                 JaxCity Book
               </p>
               <p className="font-display text-lg leading-none">{STUDIO.name}</p>
             </div>
             <Link
               href="/"
-              className="font-caps text-[0.62rem] tracking-[0.14em] text-muted no-underline"
+              className="font-caps text-[18px] tracking-[0.14em] text-muted no-underline"
             >
               Full site
             </Link>
@@ -570,7 +570,7 @@ export function BookingModal() {
         ) : (
           <button
             type="button"
-            className="absolute right-4 top-4 z-10 font-caps text-[0.65rem] text-muted"
+            className="absolute right-4 top-4 z-10 font-caps text-[18px] text-muted"
             onClick={closeBooking}
           >
             Close
@@ -666,7 +666,7 @@ export function BookingModal() {
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="font-display text-2xl">{p.name}</span>
                     {p.kind === "sample" && (
-                      <span className="font-caps text-[0.6rem] text-accent">
+                      <span className="font-caps text-[18px] text-accent">
                         Sample pricing
                       </span>
                     )}
@@ -693,7 +693,7 @@ export function BookingModal() {
               error={error}
             >
               <label className="block">
-                <span className="font-caps text-[0.65rem] text-muted">
+                <span className="font-caps text-[18px] text-muted">
                   Session length
                 </span>
                 <select
@@ -710,7 +710,7 @@ export function BookingModal() {
               </label>
 
               <div className="mt-6">
-                <span className="font-caps text-[0.65rem] text-muted">Room</span>
+                <span className="font-caps text-[18px] text-muted">Room</span>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   {ROOMS.map((r) => (
                     <button
@@ -763,7 +763,7 @@ export function BookingModal() {
                 <>
                   {bookedBlocks.length > 0 && (
                     <div className="mt-4 border border-rule bg-graphite p-3 text-sm text-muted">
-                      <p className="font-caps text-[0.6rem] text-muted">
+                      <p className="font-caps text-[18px] text-muted">
                         Already booked this day
                       </p>
                       <ul className="mt-2 space-y-1">
@@ -787,7 +787,7 @@ export function BookingModal() {
                         <button
                           key={slot}
                           type="button"
-                          className={`border px-2 py-3 font-caps text-[0.7rem] ${
+                          className={`border px-2 py-3 font-caps text-[18px] ${
                             start === slot
                               ? "border-cyan bg-graphite text-cyan"
                               : "border-rule text-paper-dim hover:border-paper-dim"
@@ -878,7 +878,7 @@ export function BookingModal() {
                 <div className="grid grid-cols-2 gap-2 pt-2">
                   <button
                     type="button"
-                    className={`border px-3 py-3 font-caps text-[0.7rem] ${
+                    className={`border px-3 py-3 font-caps text-[18px] ${
                       clientType === "first-time"
                         ? "border-paper bg-graphite"
                         : "border-rule"
@@ -894,7 +894,7 @@ export function BookingModal() {
                   </button>
                   <button
                     type="button"
-                    className={`border px-3 py-3 font-caps text-[0.7rem] ${
+                    className={`border px-3 py-3 font-caps text-[18px] ${
                       clientType === "returning"
                         ? "border-paper bg-graphite"
                         : "border-rule"
@@ -951,7 +951,7 @@ export function BookingModal() {
                 </span>{" "}
                 <span className="text-paper">${currentAddon.packagePrice}</span>
                 {currentAddon.kind === "sample" && (
-                  <span className="ml-2 font-caps text-[0.6rem] text-accent">
+                  <span className="ml-2 font-caps text-[18px] text-accent">
                     Sample offer pricing
                   </span>
                 )}
@@ -1000,7 +1000,7 @@ export function BookingModal() {
               <div className="mt-6 grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  className={`border px-3 py-3 font-caps text-[0.68rem] ${
+                  className={`border px-3 py-3 font-caps text-[18px] ${
                     payMethod === "paypal"
                       ? "border-cyan bg-graphite text-cyan"
                       : "border-rule"
@@ -1014,7 +1014,7 @@ export function BookingModal() {
                 </button>
                 <button
                   type="button"
-                  className={`border px-3 py-3 font-caps text-[0.68rem] ${
+                  className={`border px-3 py-3 font-caps text-[18px] ${
                     payMethod === "zelle"
                       ? "border-cyan bg-graphite text-cyan"
                       : "border-rule"
@@ -1049,7 +1049,7 @@ export function BookingModal() {
 
               {payMethod === "zelle" && (
                 <div className="mt-4 border border-rule bg-graphite p-4 text-sm text-paper-dim">
-                  <p className="font-caps text-[0.65rem] text-cyan">
+                  <p className="font-caps text-[18px] text-cyan">
                     Manual Zelle — no website API
                   </p>
                   <p className="mt-3">
@@ -1098,16 +1098,16 @@ export function BookingModal() {
 
           {step === "done" && (
             <div>
-              <p className="font-caps text-[0.68rem] text-accent">Complete</p>
+              <p className="font-caps text-[18px] text-accent">Complete</p>
               <h2 className="font-display mt-3 text-4xl">You&apos;re booked</h2>
               <p className="mt-4 text-paper-dim">{doneMsg}</p>
               {bookingId && (
-                <p className="mt-3 font-caps text-[0.65rem] text-muted">
+                <p className="mt-3 font-caps text-[18px] text-muted">
                   Booking ref · {bookingId}
                 </p>
               )}
               {agreementCode && (
-                <p className="mt-2 font-caps text-[0.65rem] text-cyan">
+                <p className="mt-2 font-caps text-[18px] text-cyan">
                   Agreement code · {agreementCode}
                 </p>
               )}
@@ -1137,7 +1137,7 @@ export function BookingModal() {
 
         {/* Slim summary bar */}
         <div className="absolute bottom-0 left-0 right-0 border-t border-rule bg-ink/95 px-4 py-3">
-          <div className="flex flex-wrap items-center justify-between gap-2 font-caps text-[0.62rem] tracking-[0.14em] text-muted">
+          <div className="flex flex-wrap items-center justify-between gap-2 font-caps text-[18px] tracking-[0.14em] text-muted">
             <span className="inline-flex items-center gap-2 normal-case tracking-normal">
               <RoomName roomId={roomId} size="sm" className="text-sm" />
               <span className="font-caps tracking-[0.14em]">
@@ -1184,7 +1184,7 @@ function StepShell({
 }) {
   return (
     <div>
-      <p className="font-caps text-[0.68rem] text-muted">{eyebrow}</p>
+      <p className="font-caps text-[18px] text-muted">{eyebrow}</p>
       <h2 className="font-display mt-2 text-[clamp(2rem,6vw,3.2rem)] leading-none">
         {title}
       </h2>

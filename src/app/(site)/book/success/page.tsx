@@ -31,7 +31,7 @@ export default async function SuccessPage({
 
   return (
     <div className="wide-margin section-space max-w-2xl">
-      <p className="font-caps text-[0.7rem] text-accent">Checkout</p>
+      <p className="font-caps text-[18px] text-accent">Checkout</p>
       <h1 className="font-display mt-4 text-5xl">Deposit path complete</h1>
       <p className="mt-6 text-paper-dim">{DEPOSIT.policy}</p>
       <p className="mt-4 text-paper-dim">
@@ -42,7 +42,7 @@ export default async function SuccessPage({
         <a href={`mailto:${STUDIO.email}`}>{STUDIO.email}</a>
       </p>
       {params.booking_id && (
-        <p className="mt-3 font-caps text-[0.65rem] text-muted">
+        <p className="mt-3 font-caps text-[18px] text-muted">
           Booking ref · {params.booking_id}
         </p>
       )}

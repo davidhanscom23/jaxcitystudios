@@ -118,7 +118,7 @@ export function PayPalDepositButtons({
       )}
       {sdkError && <p className="text-sm text-accent">{sdkError}</p>}
       <div ref={hostRef} className="min-h-[3rem]" />
-      <p className="font-caps text-[0.6rem] text-muted">
+      <p className="font-caps text-[18px] text-muted">
         PayPal Checkout · Venmo appears for eligible US payers
       </p>
     </div>

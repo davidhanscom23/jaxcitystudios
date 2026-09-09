@@ -159,7 +159,7 @@ export function DateCalendarPicker({
 
   return (
     <div ref={rootRef} className="relative">
-      <span className="font-caps text-[0.65rem] text-muted">Date</span>
+      <span className="font-caps text-[18px] text-muted">Date</span>
       <button
         type="button"
         className="input mt-2 flex w-full items-center justify-between gap-3 text-left"
@@ -172,7 +172,7 @@ export function DateCalendarPicker({
         <span className={selected ? "text-paper" : "text-muted"}>
           {displayLabel}
         </span>
-        <span className="font-caps text-[0.65rem] tracking-[0.14em] text-cyan">
+        <span className="font-caps text-[18px] tracking-[0.14em] text-cyan">
           {open ? "Close" : "Calendar"}
         </span>
       </button>
@@ -187,18 +187,18 @@ export function DateCalendarPicker({
           <div className="mb-3 flex items-center justify-between gap-2">
             <button
               type="button"
-              className="font-caps text-[0.65rem] tracking-[0.12em] text-muted transition-colors hover:text-paper"
+              className="font-caps text-[18px] tracking-[0.12em] text-muted transition-colors hover:text-paper"
               onClick={() => setMonth((m) => addMonths(m, -1))}
               aria-label="Previous month"
             >
               Prev
             </button>
-            <p className="font-caps text-[0.75rem] tracking-[0.16em] text-paper">
+            <p className="font-caps text-[18px] tracking-[0.16em] text-paper">
               {format(month, "MMMM yyyy")}
             </p>
             <button
               type="button"
-              className="font-caps text-[0.65rem] tracking-[0.12em] text-muted transition-colors hover:text-paper"
+              className="font-caps text-[18px] tracking-[0.12em] text-muted transition-colors hover:text-paper"
               onClick={() => setMonth((m) => addMonths(m, 1))}
               aria-label="Next month"
             >
@@ -210,7 +210,7 @@ export function DateCalendarPicker({
             {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
               <div
                 key={d}
-                className="py-1 text-center font-caps text-[0.55rem] tracking-[0.12em] text-muted"
+                className="py-1 text-center font-caps text-[18px] tracking-[0.12em] text-muted"
               >
                 {d}
               </div>

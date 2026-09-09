@@ -8,7 +8,7 @@ export function SiteFooter() {
       <div className="wide-margin section-space">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="font-caps text-[0.7rem] text-cyan">Brand line</p>
+            <p className="font-caps text-[18px] text-cyan">Brand line</p>
             <p className="font-display crop-type mt-3 text-[clamp(3rem,12vw,8rem)] text-paper text-glow-cyan">
               {STUDIO.brandLine}
             </p>
@@ -28,7 +28,7 @@ export function SiteFooter() {
 
         <div className="mt-14 grid gap-10 border-t border-rule pt-10 md:grid-cols-3">
           <div>
-            <p className="font-caps text-[0.68rem] text-muted">Contact</p>
+            <p className="font-caps text-[18px] text-muted">Contact</p>
             <ul className="mt-4 space-y-2 text-paper-dim">
               <li>
                 <a href={`tel:${STUDIO.phoneTel}`}>{STUDIO.phone}</a>
@@ -49,7 +49,7 @@ export function SiteFooter() {
             </ul>
           </div>
           <div>
-            <p className="font-caps text-[0.68rem] text-muted">Navigate</p>
+            <p className="font-caps text-[18px] text-muted">Navigate</p>
             <ul className="mt-4 space-y-2">
               <li>
                 <Link href="/lineup">Lineup</Link>
@@ -69,12 +69,12 @@ export function SiteFooter() {
             </ul>
           </div>
           <div>
-            <p className="font-caps text-[0.68rem] text-muted">Note</p>
+            <p className="font-caps text-[18px] text-muted">Note</p>
             <p className="mt-4 text-hot">{STUDIO.seriousInquiries}</p>
           </div>
         </div>
 
-        <p className="mt-14 font-caps text-[0.65rem] text-muted">
+        <p className="mt-14 font-caps text-[18px] text-muted">
           © {new Date().getFullYear()} {STUDIO.name}. {STUDIO.city}.
         </p>
       </div>

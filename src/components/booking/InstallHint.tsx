@@ -47,7 +47,7 @@ export function InstallHint() {
         </p>
         <button
           type="button"
-          className="font-caps text-[0.62rem] tracking-[0.14em] text-muted"
+          className="font-caps text-[18px] tracking-[0.14em] text-muted"
           onClick={() => {
             sessionStorage.setItem("jaxcity-install-hint-dismissed", "1");
             setShow(false);

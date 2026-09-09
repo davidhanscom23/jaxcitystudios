@@ -169,7 +169,7 @@ export function AgreementEditor({
     <div className="space-y-10">
       <div className="flex flex-wrap items-end justify-between gap-4 border border-rule bg-graphite/50 p-4">
         <div>
-          <p className="font-caps text-[0.65rem] text-muted">
+          <p className="font-caps text-[18px] text-muted">
             Status · {agreement.status} · rev {agreement.revision} · template v
             {agreement.templateVersion}
           </p>
@@ -218,7 +218,7 @@ export function AgreementEditor({
             ] as const
           ).map(([key, label]) => (
             <label key={key} className="block">
-              <span className="font-caps text-[0.6rem] text-muted">{label}</span>
+              <span className="font-caps text-[18px] text-muted">{label}</span>
               <input
                 className="input mt-1"
                 value={String(draft[key] ?? "")}
@@ -235,7 +235,7 @@ export function AgreementEditor({
             </label>
           ))}
           <label className="block">
-            <span className="font-caps text-[0.6rem] text-muted">Room</span>
+            <span className="font-caps text-[18px] text-muted">Room</span>
             <select
               className="select mt-1"
               value={draft.roomId}

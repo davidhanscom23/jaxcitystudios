@@ -30,7 +30,7 @@ export default async function AgreementPage({
 
   return (
     <div className="wide-margin section-space">
-      <p className="font-caps text-[0.7rem] text-muted">Legal</p>
+      <p className="font-caps text-[18px] text-muted">Legal</p>
       <h1 className="font-display crop-type mt-4 max-w-[16ch] text-[clamp(2.6rem,8vw,5rem)]">
         Rental agreement
       </h1>

@@ -23,7 +23,7 @@ export function ContactForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4 border border-rule p-6">
-      <p className="font-caps text-[0.65rem] text-muted">Message</p>
+      <p className="font-caps text-[18px] text-muted">Message</p>
       <input className="input" name="name" placeholder="Name" required />
       <input
         className="input"

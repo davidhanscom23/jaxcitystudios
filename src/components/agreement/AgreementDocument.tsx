@@ -32,22 +32,22 @@ export function AgreementDocument({
         </p>
         <dl className="mt-4 space-y-2 border border-rule bg-graphite/60 p-4">
           <div>
-            <dt className="font-caps text-[0.6rem] text-muted">Renter&apos;s name</dt>
+            <dt className="font-caps text-[18px] text-muted">Renter&apos;s name</dt>
             <dd className="text-paper">{fill.renterName || "—"}</dd>
           </div>
           <div>
-            <dt className="font-caps text-[0.6rem] text-muted">Room being rented</dt>
+            <dt className="font-caps text-[18px] text-muted">Room being rented</dt>
             <dd className="text-paper">{fill.roomName}</dd>
           </div>
           <div>
-            <dt className="font-caps text-[0.6rem] text-muted">Rental duration</dt>
+            <dt className="font-caps text-[18px] text-muted">Rental duration</dt>
             <dd className="text-paper">{rentalDurationLabel(fill)}</dd>
           </div>
         </dl>
       </header>
 
       <section>
-        <h2 className="font-caps text-[0.75rem] tracking-[0.16em] text-cyan">
+        <h2 className="font-caps text-[18px] tracking-[0.16em] text-cyan">
           Terms of rental
         </h2>
         <ol className="mt-4 list-decimal space-y-4 pl-5">
@@ -160,7 +160,7 @@ export function AgreementDocument({
 
       <div className="grid gap-8 sm:grid-cols-2">
         <div>
-          <p className="font-caps text-[0.65rem] text-muted">Renter&apos;s signature</p>
+          <p className="font-caps text-[18px] text-muted">Renter&apos;s signature</p>
           {renterSignature ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -176,7 +176,7 @@ export function AgreementDocument({
           </p>
         </div>
         <div>
-          <p className="font-caps text-[0.65rem] text-muted">
+          <p className="font-caps text-[18px] text-muted">
             Studio owner&apos;s signature
           </p>
           {ownerSignature ? (

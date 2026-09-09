@@ -33,7 +33,7 @@ export function HomePage() {
             />
           </div>
           <div>
-            <p className="font-caps fade-in text-[0.72rem] text-cyan">
+            <p className="font-caps fade-in text-[18px] text-cyan">
               {STUDIO.city} · Music & podcast
             </p>
             <h1 className="font-display fade-in-delay crop-type mt-4 max-w-[12ch] text-[clamp(3.8rem,14vw,9.5rem)] text-paper text-glow-cyan">
@@ -57,7 +57,7 @@ export function HomePage() {
 
       {/* Dual doors — real lounge/booth + control detail */}
       <section className="section-space wide-margin border-t border-rule">
-        <p className="font-caps text-[0.7rem] text-cyan">Two front doors</p>
+        <p className="font-caps text-[18px] text-cyan">Two front doors</p>
         <div className="mt-10 grid gap-12 lg:grid-cols-2 lg:gap-16">
           <article>
             <div className="photo-wrap neon-frame relative aspect-[4/5] overflow-hidden">
@@ -78,7 +78,7 @@ export function HomePage() {
             </p>
             <Link
               href="/lineup#music"
-              className="mt-6 inline-block font-caps text-[0.72rem] text-cyan"
+              className="mt-6 inline-block font-caps text-[18px] text-cyan"
             >
               See music lineup →
             </Link>
@@ -102,7 +102,7 @@ export function HomePage() {
             </p>
             <Link
               href="/lineup#podcast"
-              className="mt-6 inline-block font-caps text-[0.72rem] text-magenta"
+              className="mt-6 inline-block font-caps text-[18px] text-magenta"
             >
               See podcast lineup →
             </Link>
@@ -113,7 +113,7 @@ export function HomePage() {
       {/* Room system spine — flyer color accents */}
       <section className="section-space border-t border-rule bg-charcoal">
         <div className="wide-margin">
-          <p className="font-caps text-[0.7rem] text-cyan">Choose your room</p>
+          <p className="font-caps text-[18px] text-cyan">Choose your room</p>
           <h2 className="font-display crop-type mt-4 max-w-[10ch] text-[clamp(2.8rem,8vw,6rem)]">
             Mercury to Mars
           </h2>
@@ -127,7 +127,7 @@ export function HomePage() {
                 key={room.id}
                 className="grid grid-cols-[3rem_1fr_auto] items-center gap-4 py-8 sm:grid-cols-[4rem_1fr_8rem_auto]"
               >
-                <span className="font-caps text-[0.7rem] text-muted">
+                <span className="font-caps text-[18px] text-muted">
                   0{i + 1}
                 </span>
                 <div>
@@ -136,12 +136,12 @@ export function HomePage() {
                   </h3>
                   <p className="mt-2 max-w-md text-sm text-muted">{room.fit}</p>
                 </div>
-                <p className="hidden font-caps text-[0.7rem] text-muted sm:block">
+                <p className="hidden font-caps text-[18px] text-muted sm:block">
                   Up to {room.maxPeople} · {room.maxCameras} cam
                 </p>
                 <p className="font-display text-2xl sm:text-3xl" style={{ color: room.color }}>
                   ${room.hourly}
-                  <span className="font-caps ml-1 text-[0.6rem] text-muted">
+                  <span className="font-caps ml-1 text-[18px] text-muted">
                     /hr room
                   </span>
                 </p>
@@ -178,7 +178,7 @@ export function HomePage() {
         </div>
         <div className="relative z-10 flex min-h-[70vh] items-end wide-margin pb-16">
           <div className="max-w-lg">
-            <p className="font-caps text-[0.7rem] text-cyan">The rooms</p>
+            <p className="font-caps text-[18px] text-cyan">The rooms</p>
             <h2 className="font-display mt-3 text-4xl text-glow-cyan sm:text-6xl">
               The engineer runs the night
             </h2>

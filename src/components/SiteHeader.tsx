@@ -40,7 +40,7 @@ export function SiteHeader() {
             <Link
               key={l.href}
               href={l.href}
-              className={`font-caps text-[0.72rem] no-underline transition-colors ${
+              className={`font-caps text-[18px] no-underline transition-colors ${
                 pathname?.startsWith(l.href)
                   ? "text-cyan text-glow-cyan"
                   : "text-muted hover:text-paper"
@@ -54,7 +54,7 @@ export function SiteHeader() {
           </button>
           <Link
             href="/app"
-            className="font-caps text-[0.72rem] text-muted no-underline hover:text-paper"
+            className="font-caps text-[18px] text-muted no-underline hover:text-paper"
           >
             Phone app
           </Link>
@@ -62,7 +62,7 @@ export function SiteHeader() {
 
         <button
           type="button"
-          className="font-caps text-[0.75rem] text-cyan lg:hidden"
+          className="font-caps text-[18px] text-cyan lg:hidden"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
         >

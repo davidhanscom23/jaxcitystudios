@@ -13,7 +13,7 @@ export const metadata = pageMeta({
 export default function ContactPage() {
   return (
     <div className="wide-margin section-space">
-      <p className="font-caps text-[0.7rem] text-muted">Contact</p>
+      <p className="font-caps text-[18px] text-muted">Contact</p>
       <h1 className="font-display crop-type mt-4 text-[clamp(3rem,9vw,6rem)]">
         Serious Inquiries Only.
       </h1>
@@ -35,15 +35,15 @@ export default function ContactPage() {
           </div>
           <ul className="space-y-6 text-lg">
             <li>
-              <p className="font-caps text-[0.65rem] text-muted">Phone</p>
+              <p className="font-caps text-[18px] text-muted">Phone</p>
               <a href={`tel:${STUDIO.phoneTel}`}>{STUDIO.phone}</a>
             </li>
             <li>
-              <p className="font-caps text-[0.65rem] text-muted">Email</p>
+              <p className="font-caps text-[18px] text-muted">Email</p>
               <a href={`mailto:${STUDIO.email}`}>{STUDIO.email}</a>
             </li>
             <li>
-              <p className="font-caps text-[0.65rem] text-muted">Instagram</p>
+              <p className="font-caps text-[18px] text-muted">Instagram</p>
               <a
                 href={STUDIO.instagramUrl}
                 target="_blank"
@@ -53,11 +53,11 @@ export default function ContactPage() {
               </a>
             </li>
             <li>
-              <p className="font-caps text-[0.65rem] text-muted">Address</p>
+              <p className="font-caps text-[18px] text-muted">Address</p>
               <p className="text-paper-dim">{STUDIO.addressPlaceholder}</p>
             </li>
             <li>
-              <p className="font-caps text-[0.65rem] text-muted">Booking policy</p>
+              <p className="font-caps text-[18px] text-muted">Booking policy</p>
               <p className="text-sm text-paper-dim">{DEPOSIT.policy}</p>
             </li>
           </ul>
