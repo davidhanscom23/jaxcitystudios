@@ -3,19 +3,42 @@ import fs from "fs";
 import path from "path";
 import { ROOMS } from "@/lib/rates";
 
-const DEFAULT_DB = path.join(process.cwd(), "data", "jaxcity.db");
+/**
+ * Prefer an explicit DATABASE_PATH. On Vercel/serverless the app filesystem
+ * is read-only, so fall back to /tmp. Locally use data/jaxcity.db.
+ */
+export function resolveDbPath(): string {
+  if (process.env.DATABASE_PATH) return process.env.DATABASE_PATH;
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return path.join("/tmp", "jaxcity-studios", "jaxcity.db");
+  }
+  return path.join(process.cwd(), "data", "jaxcity.db");
+}
 
 let dbInstance: Database.Database | null = null;
 
 export function getDb(): Database.Database {
   if (dbInstance) return dbInstance;
 
-  const dbPath = process.env.DATABASE_PATH || DEFAULT_DB;
-  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  const dbPath = resolveDbPath();
+  try {
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Cannot create database directory for ${dbPath}: ${message}`,
+    );
+  }
 
-  const db = new Database(dbPath);
-  db.pragma("journal_mode = WAL");
-  db.pragma("foreign_keys = ON");
+  let db: Database.Database;
+  try {
+    db = new Database(dbPath);
+    db.pragma("journal_mode = WAL");
+    db.pragma("foreign_keys = ON");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Cannot open studio database at ${dbPath}: ${message}`);
+  }
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS rooms (
