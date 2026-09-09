@@ -9,6 +9,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import Link from "next/link";
 import { useBooking } from "@/components/booking/BookingProvider";
 import { RoomName } from "@/components/RoomName";
 import { PayPalDepositButtons } from "@/components/booking/PayPalDepositButtons";
@@ -45,7 +46,7 @@ type Step =
   | "agreement"
   | "done";
 
-const STEPS: Step[] = [
+const STEPS_MODAL: Step[] = [
   "date-room",
   "package",
   "times",
@@ -53,6 +54,9 @@ const STEPS: Step[] = [
   "addon",
   "checkout",
 ];
+
+/** Phone app: session only — skip packages and sample add-ons. */
+const STEPS_APP: Step[] = ["date-room", "times", "contact", "checkout"];
 
 const DURATION_OPTIONS = [2, 3, 4, 6, 8];
 
@@ -63,7 +67,9 @@ export function BookingModal() {
     initialRoomId,
     initialPackageId,
     planner,
+    presentation,
   } = useBooking();
+  const isApp = presentation === "standalone";
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [step, setStep] = useState<Step>("date-room");
@@ -129,7 +135,11 @@ export function BookingModal() {
     setEligibilityLoading(false);
     if (initialRoomId) setRoomId(initialRoomId);
     if (planner?.roomId) setRoomId(planner.roomId);
-    if (initialPackageId) setPackageId(initialPackageId);
+    if (isApp) {
+      setPackageId("session");
+    } else if (initialPackageId) {
+      setPackageId(initialPackageId);
+    }
     if (planner?.clientType) setClientType(planner.clientType);
     if (planner?.bookedHours) {
       setDurationHours(
@@ -138,7 +148,7 @@ export function BookingModal() {
     } else {
       setDurationHours(ENGINEERED.minimumHours);
     }
-  }, [open, initialRoomId, initialPackageId, planner]);
+  }, [open, initialRoomId, initialPackageId, planner, isApp]);
 
   useEffect(() => {
     if (!open) return;
@@ -267,8 +277,13 @@ export function BookingModal() {
       void openAgreementStep();
       return;
     }
-    const idx = STEPS.indexOf(current);
-    if (idx >= 0 && idx < STEPS.length - 1) setStep(STEPS[idx + 1]);
+    if (isApp && current === "contact") {
+      void openAgreementStep();
+      return;
+    }
+    const steps = isApp ? STEPS_APP : STEPS_MODAL;
+    const idx = steps.indexOf(current);
+    if (idx >= 0 && idx < steps.length - 1) setStep(steps[idx + 1]);
   }
 
   function backFrom(current: Step) {
@@ -281,6 +296,10 @@ export function BookingModal() {
       return;
     }
     if (current === "agreement") {
+      if (isApp) {
+        setStep("contact");
+        return;
+      }
       setStep("addon");
       setAddonIndex(ADDONS.length - 1);
       return;
@@ -289,8 +308,9 @@ export function BookingModal() {
       setStep("contact");
       return;
     }
-    const idx = STEPS.indexOf(current);
-    if (idx > 0) setStep(STEPS[idx - 1]);
+    const steps = isApp ? STEPS_APP : STEPS_MODAL;
+    const idx = steps.indexOf(current);
+    if (idx > 0) setStep(steps[idx - 1]);
   }
 
   async function linkAgreementToBooking(nextBookingId: string) {
@@ -518,17 +538,51 @@ export function BookingModal() {
   const currentAddon = ADDONS[addonIndex];
 
   return (
-    <div className="no-print fixed inset-0 z-[60] flex items-stretch justify-center bg-ink/80 p-0 sm:items-center sm:p-6">
-      <div className="relative flex h-full w-full max-w-xl flex-col border border-rule bg-charcoal sm:h-[min(44rem,92vh)]">
-        <button
-          type="button"
-          className="absolute right-4 top-4 z-10 font-caps text-[0.65rem] text-muted"
-          onClick={closeBooking}
-        >
-          Close
-        </button>
+    <div
+      className={
+        isApp
+          ? "fixed inset-0 z-40 flex items-stretch justify-center bg-ink p-0"
+          : "no-print fixed inset-0 z-[60] flex items-stretch justify-center bg-ink/80 p-0 sm:items-center sm:p-6"
+      }
+    >
+      <div
+        className={
+          isApp
+            ? "relative flex h-[100dvh] w-full max-w-xl flex-col bg-charcoal pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+            : "relative flex h-full w-full max-w-xl flex-col border border-rule bg-charcoal sm:h-[min(44rem,92vh)]"
+        }
+      >
+        {isApp ? (
+          <div className="flex items-center justify-between border-b border-rule px-4 py-3">
+            <div>
+              <p className="font-caps text-[0.62rem] tracking-[0.16em] text-accent">
+                JaxCity Book
+              </p>
+              <p className="font-display text-lg leading-none">{STUDIO.name}</p>
+            </div>
+            <Link
+              href="/"
+              className="font-caps text-[0.62rem] tracking-[0.14em] text-muted no-underline"
+            >
+              Full site
+            </Link>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="absolute right-4 top-4 z-10 font-caps text-[0.65rem] text-muted"
+            onClick={closeBooking}
+          >
+            Close
+          </button>
+        )}
 
-        <div ref={scrollRef} className="modal-scroll flex-1 px-6 pb-28 pt-10 sm:px-8">
+        <div
+          ref={scrollRef}
+          className={`modal-scroll flex-1 px-6 sm:px-8 ${
+            isApp ? "pb-32 pt-6" : "pb-28 pt-10"
+          }`}
+        >
           {step === "date-room" && (
             <StepShell
               eyebrow="Step 1"
@@ -585,7 +639,7 @@ export function BookingModal() {
             </StepShell>
           )}
 
-          {step === "package" && (
+          {step === "package" && !isApp && (
             <StepShell
               eyebrow="Step 2"
               title="Package"
@@ -625,7 +679,7 @@ export function BookingModal() {
 
           {step === "times" && (
             <StepShell
-              eyebrow="Step 3"
+              eyebrow={isApp ? "Step 2" : "Step 3"}
               title="Available times"
               onBack={() => backFrom("times")}
               onNext={() => {
@@ -777,7 +831,7 @@ export function BookingModal() {
 
           {step === "contact" && (
             <StepShell
-              eyebrow="Step 4"
+              eyebrow={isApp ? "Step 3" : "Step 4"}
               title="You"
               onBack={() => backFrom("contact")}
               onNext={async () => {
@@ -797,6 +851,7 @@ export function BookingModal() {
                 setError("");
                 nextFrom("contact");
               }}
+              nextLabel={isApp ? (busy ? "Preparing…" : "Continue to agreement") : "Continue"}
               error={error}
             >
               <div className="space-y-3">
@@ -871,7 +926,7 @@ export function BookingModal() {
             </StepShell>
           )}
 
-          {step === "addon" && currentAddon && (
+          {step === "addon" && !isApp && currentAddon && (
             <StepShell
               eyebrow={`Add-on ${addonIndex + 1} of ${ADDONS.length}`}
               title={currentAddon.name}
@@ -1068,8 +1123,12 @@ export function BookingModal() {
                     View agreement
                   </a>
                 )}
-                <button type="button" className="btn btn-solid" onClick={closeBooking}>
-                  Close
+                <button
+                  type="button"
+                  className="btn btn-solid"
+                  onClick={closeBooking}
+                >
+                  {isApp ? "Book another" : "Close"}
                 </button>
               </div>
             </div>
