@@ -108,9 +108,10 @@ a {
   border-top: 1px solid var(--rule);
 }
 
-/* Soft overlay for real studio photos — keep color, add night depth */
+/* Soft overlay for real studio photos — keep color, add night depth.
+   Do NOT set position here — callers pass relative or absolute via Tailwind
+   so fill images get a real height. */
 .photo-wrap {
-  position: relative;
   overflow: hidden;
   background: #050508;
 }
@@ -121,9 +122,9 @@ a {
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(5, 5, 8, 0.2) 0%,
-    rgba(5, 5, 8, 0.15) 40%,
-    rgba(5, 5, 8, 0.72) 100%
+    rgba(5, 5, 8, 0.15) 0%,
+    rgba(5, 5, 8, 0.08) 40%,
+    rgba(5, 5, 8, 0.55) 100%
   );
   pointer-events: none;
   z-index: 1;
@@ -132,9 +133,9 @@ a {
 .photo-wrap.photo-side::after {
   background: linear-gradient(
     90deg,
-    rgba(5, 5, 8, 0.55) 0%,
-    rgba(5, 5, 8, 0.15) 55%,
-    rgba(5, 5, 8, 0.45) 100%
+    rgba(5, 5, 8, 0.45) 0%,
+    rgba(5, 5, 8, 0.1) 55%,
+    rgba(5, 5, 8, 0.35) 100%
   );
 }
 
@@ -142,21 +143,21 @@ a {
   background:
     linear-gradient(
       105deg,
-      rgba(5, 5, 8, 0.55) 0%,
-      rgba(5, 5, 8, 0.2) 48%,
-      rgba(5, 5, 8, 0.08) 72%,
-      rgba(5, 5, 8, 0.28) 100%
+      rgba(5, 5, 8, 0.45) 0%,
+      rgba(5, 5, 8, 0.12) 45%,
+      rgba(5, 5, 8, 0.05) 70%,
+      rgba(5, 5, 8, 0.2) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(5, 5, 8, 0.15) 0%,
-      rgba(5, 5, 8, 0.05) 40%,
-      rgba(5, 5, 8, 0.62) 100%
+      rgba(5, 5, 8, 0.12) 0%,
+      transparent 45%,
+      rgba(5, 5, 8, 0.55) 100%
     );
 }
 
 .photo-wrap.hero-photo img {
-  filter: contrast(1.08) brightness(0.92);
+  filter: contrast(1.12) brightness(1.15);
 }
 
 .duotone {
