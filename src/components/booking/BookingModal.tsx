@@ -12,6 +12,7 @@ import {
 import { useBooking } from "@/components/booking/BookingProvider";
 import { RoomName } from "@/components/RoomName";
 import { PayPalDepositButtons } from "@/components/booking/PayPalDepositButtons";
+import { DateCalendarPicker } from "@/components/booking/DateCalendarPicker";
 import {
   ADDONS,
   DEPOSIT,
@@ -372,16 +373,13 @@ export function BookingModal() {
               }}
               error={error}
             >
-              <label className="block">
-                <span className="font-caps text-[0.65rem] text-muted">Date</span>
-                <input
-                  type="date"
-                  className="input mt-2"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                />
-              </label>
+              <DateCalendarPicker
+                value={date}
+                onChange={setDate}
+                roomId={roomId}
+                durationHours={durationHours}
+                autoOpen
+              />
               <div className="mt-6 grid gap-2">
                 {ROOMS.map((r) => (
                   <button
