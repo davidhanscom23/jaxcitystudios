@@ -2,14 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useBooking } from "@/components/booking/BookingProvider";
 import { RoomName } from "@/components/RoomName";
-import { ENGINEERED, INTRO_PROMO, ROOMS, STUDIO } from "@/lib/rates";
+import { ENGINEERED, ROOMS, STUDIO } from "@/lib/rates";
 import { ReviewsSection } from "@/components/ReviewsSection";
 
 export function HomePage() {
-  const { openBooking } = useBooking();
-
   return (
     <>
       {/* HERO — B&W session photo + Press Record */}
@@ -193,32 +190,6 @@ export function HomePage() {
       </section>
 
       <ReviewsSection />
-
-      {/* CTA — flyer magenta intro */}
-      <section className="section-space border-t border-rule bg-graphite">
-        <div className="wide-margin flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="font-caps text-[0.7rem] text-magenta text-glow-magenta">
-              Today only · first session
-            </p>
-            <h2 className="font-display mt-3 text-4xl text-glow-magenta sm:text-6xl">
-              {INTRO_PROMO.label}
-            </h2>
-            <p className="mt-4 max-w-md text-paper-dim">
-              Or build the episode first — timeline, room fit, running cost —
-              then book with a 50% deposit.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/planner" className="btn btn-solid no-underline">
-              Build Your Show
-            </Link>
-            <button type="button" className="btn btn-accent" onClick={() => openBooking()}>
-              Book a session
-            </button>
-          </div>
-        </div>
-      </section>
     </>
   );
 }
