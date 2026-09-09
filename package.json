@@ -11,13 +11,11 @@
     "db:init": "npx tsx scripts/init-db.ts"
   },
   "dependencies": {
-    "@stripe/stripe-js": "^9.15.0",
     "better-sqlite3": "^13.0.3",
     "date-fns": "^4.4.0",
     "next": "^15.5.25",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "stripe": "^22.6.1",
     "zod": "^4.5.4"
   },
   "devDependencies": {

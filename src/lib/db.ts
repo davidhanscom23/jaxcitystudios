@@ -57,6 +57,18 @@ export function getDb(): Database.Database {
       ON bookings(room_id, session_date, status);
   `);
 
+  // Migrations for payment-provider fields (safe on existing DBs)
+  const cols = db
+    .prepare("PRAGMA table_info(bookings)")
+    .all() as { name: string }[];
+  const names = new Set(cols.map((c) => c.name));
+  if (!names.has("payment_method")) {
+    db.exec("ALTER TABLE bookings ADD COLUMN payment_method TEXT");
+  }
+  if (!names.has("payment_ref")) {
+    db.exec("ALTER TABLE bookings ADD COLUMN payment_ref TEXT");
+  }
+
   const roomUpsert = db.prepare(`
     INSERT INTO rooms (id, name, hourly_room_only)
     VALUES (@id, @name, @hourly)

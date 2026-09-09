@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { pageMeta } from "@/lib/seo";
 import { DEPOSIT, STUDIO } from "@/lib/rates";
-import { confirmBookingByStripeSession } from "@/lib/availability";
+import {
+  confirmBookingById,
+  confirmBookingByPaymentRef,
+} from "@/lib/availability";
 
 export const metadata = pageMeta({
   title: "Deposit received | JaxCity Studios",
@@ -12,11 +15,18 @@ export const metadata = pageMeta({
 export default async function SuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ session_id?: string; booking_id?: string }>;
+  searchParams: Promise<{
+    session_id?: string;
+    booking_id?: string;
+    token?: string;
+  }>;
 }) {
   const params = await searchParams;
   if (params.session_id) {
-    confirmBookingByStripeSession(params.session_id);
+    confirmBookingByPaymentRef(params.session_id);
+  }
+  if (params.booking_id) {
+    confirmBookingById(params.booking_id);
   }
 
   return (
@@ -25,8 +35,9 @@ export default async function SuccessPage({
       <h1 className="font-display mt-4 text-5xl">Deposit path complete</h1>
       <p className="mt-6 text-paper-dim">{DEPOSIT.policy}</p>
       <p className="mt-4 text-paper-dim">
-        That room and time is now marked booked on the studio calendar.
-        Confirmation lands in your email from Stripe. Questions:{" "}
+        That room and time is marked on the studio calendar. PayPal/Venmo
+        deposits confirm automatically; Zelle holds wait for the studio to
+        verify the transfer. Questions:{" "}
         <a href={`tel:${STUDIO.phoneTel}`}>{STUDIO.phone}</a> ·{" "}
         <a href={`mailto:${STUDIO.email}`}>{STUDIO.email}</a>
       </p>

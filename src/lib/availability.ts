@@ -160,7 +160,10 @@ export type CreateBookingInput = {
   hours?: number;
   totalCents?: number;
   depositCents?: number;
+  /** @deprecated use paymentRef */
   stripeSessionId?: string;
+  paymentMethod?: "paypal" | "venmo" | "zelle" | "manual";
+  paymentRef?: string;
   notes?: string;
 };
 
@@ -178,18 +181,19 @@ export function createBooking(input: CreateBookingInput): {
 
   const id = randomUUID();
   const now = new Date().toISOString();
+  const paymentRef = input.paymentRef ?? input.stripeSessionId ?? null;
   getDb()
     .prepare(
       `INSERT INTO bookings (
         id, room_id, session_date, start_time, end_time, status,
         client_name, client_email, client_phone, client_type, package_id,
-        hours, total_cents, deposit_cents, stripe_session_id, notes,
-        created_at, updated_at
+        hours, total_cents, deposit_cents, stripe_session_id, payment_method,
+        payment_ref, notes, created_at, updated_at
       ) VALUES (
         @id, @room_id, @session_date, @start_time, @end_time, @status,
         @client_name, @client_email, @client_phone, @client_type, @package_id,
-        @hours, @total_cents, @deposit_cents, @stripe_session_id, @notes,
-        @created_at, @updated_at
+        @hours, @total_cents, @deposit_cents, @stripe_session_id, @payment_method,
+        @payment_ref, @notes, @created_at, @updated_at
       )`,
     )
     .run({
@@ -207,7 +211,9 @@ export function createBooking(input: CreateBookingInput): {
       hours: input.hours ?? null,
       total_cents: input.totalCents ?? null,
       deposit_cents: input.depositCents ?? null,
-      stripe_session_id: input.stripeSessionId ?? null,
+      stripe_session_id: paymentRef,
+      payment_method: input.paymentMethod ?? null,
+      payment_ref: paymentRef,
       notes: input.notes ?? null,
       created_at: now,
       updated_at: now,
@@ -216,28 +222,57 @@ export function createBooking(input: CreateBookingInput): {
   return { ok: true, bookingId: id };
 }
 
-export function confirmBookingByStripeSession(
-  stripeSessionId: string,
-): boolean {
+export function confirmBookingByPaymentRef(paymentRef: string): boolean {
   const result = getDb()
     .prepare(
       `UPDATE bookings
        SET status = 'confirmed', updated_at = ?
-       WHERE stripe_session_id = ? AND status = 'held'`,
+       WHERE (payment_ref = ? OR stripe_session_id = ?) AND status = 'held'`,
     )
-    .run(new Date().toISOString(), stripeSessionId);
+    .run(new Date().toISOString(), paymentRef, paymentRef);
   return result.changes > 0;
 }
 
-export function attachStripeSession(
+/** @deprecated use confirmBookingByPaymentRef */
+export function confirmBookingByStripeSession(sessionId: string): boolean {
+  return confirmBookingByPaymentRef(sessionId);
+}
+
+export function confirmBookingById(bookingId: string): boolean {
+  const result = getDb()
+    .prepare(
+      `UPDATE bookings
+       SET status = 'confirmed', updated_at = ?
+       WHERE id = ? AND status = 'held'`,
+    )
+    .run(new Date().toISOString(), bookingId);
+  return result.changes > 0;
+}
+
+export function attachPaymentRef(
   bookingId: string,
-  stripeSessionId: string,
+  paymentRef: string,
+  paymentMethod?: string,
 ): void {
   getDb()
     .prepare(
       `UPDATE bookings
-       SET stripe_session_id = ?, updated_at = ?
+       SET payment_ref = ?, stripe_session_id = ?, payment_method = COALESCE(?, payment_method), updated_at = ?
        WHERE id = ?`,
     )
-    .run(stripeSessionId, new Date().toISOString(), bookingId);
+    .run(
+      paymentRef,
+      paymentRef,
+      paymentMethod ?? null,
+      new Date().toISOString(),
+      bookingId,
+    );
+}
+
+/** @deprecated use attachPaymentRef */
+export function attachStripeSession(
+  bookingId: string,
+  stripeSessionId: string,
+): void {
+  attachPaymentRef(bookingId, stripeSessionId, "stripe");
 }
