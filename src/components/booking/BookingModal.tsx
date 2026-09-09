@@ -41,14 +41,15 @@ const STEPS: Step[] = [
   "checkout",
 ];
 
-function hoursBetween(start: string, end: string): number {
-  if (!start || !end) return ENGINEERED.minimumHours;
+function addHoursToTime(start: string, durationHours: number): string {
   const [sh, sm] = start.split(":").map(Number);
-  const [eh, em] = end.split(":").map(Number);
-  const diff = (eh * 60 + em - (sh * 60 + sm)) / 60;
-  if (Number.isNaN(diff) || diff <= 0) return ENGINEERED.minimumHours;
-  return Math.max(ENGINEERED.minimumHours, Math.round(diff * 4) / 4);
+  const total = sh * 60 + sm + Math.round(durationHours * 60);
+  const eh = Math.floor(total / 60);
+  const em = total % 60;
+  return `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
 }
+
+const DURATION_OPTIONS = [2, 3, 4, 6, 8];
 
 export function BookingModal() {
   const {
@@ -64,8 +65,10 @@ export function BookingModal() {
   const [date, setDate] = useState("");
   const [roomId, setRoomId] = useState<RoomId>("venus");
   const [packageId, setPackageId] = useState("session");
-  const [start, setStart] = useState("14:00");
-  const [end, setEnd] = useState("16:00");
+  const [durationHours, setDurationHours] = useState<number>(
+    ENGINEERED.minimumHours,
+  );
+  const [start, setStart] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -77,6 +80,14 @@ export function BookingModal() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [doneMsg, setDoneMsg] = useState("");
+  const [availableStarts, setAvailableStarts] = useState<string[]>([]);
+  const [bookedBlocks, setBookedBlocks] = useState<
+    { start: string; end: string; status: string }[]
+  >([]);
+  const [studioOpen, setStudioOpen] = useState("10:00");
+  const [studioClose, setStudioClose] = useState("22:00");
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -85,16 +96,19 @@ export function BookingModal() {
     setSelectedAddons([]);
     setError("");
     setDoneMsg("");
+    setStart("");
+    setAvailableStarts([]);
+    setBookedBlocks([]);
     if (initialRoomId) setRoomId(initialRoomId);
     if (planner?.roomId) setRoomId(planner.roomId);
     if (initialPackageId) setPackageId(initialPackageId);
     if (planner?.clientType) setClientType(planner.clientType);
     if (planner?.bookedHours) {
-      setStart("14:00");
-      const endH = 14 + planner.bookedHours;
-      const eh = Math.floor(endH);
-      const em = Math.round((endH - eh) * 60);
-      setEnd(`${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`);
+      setDurationHours(
+        Math.max(ENGINEERED.minimumHours, planner.bookedHours),
+      );
+    } else {
+      setDurationHours(ENGINEERED.minimumHours);
     }
   }, [open, initialRoomId, initialPackageId, planner]);
 
@@ -103,7 +117,43 @@ export function BookingModal() {
     scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, [step, open, addonIndex]);
 
-  const hours = hoursBetween(start, end);
+  useEffect(() => {
+    if (!open || !date || !roomId) return;
+    let cancelled = false;
+    setAvailabilityLoading(true);
+    setAvailabilityError("");
+    fetch(
+      `/api/availability?room=${roomId}&date=${date}&hours=${durationHours}`,
+    )
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Could not load availability");
+        if (cancelled) return;
+        setAvailableStarts(data.availableStarts || []);
+        setBookedBlocks(data.bookedBlocks || []);
+        setStudioOpen(data.hours?.openTime || "10:00");
+        setStudioClose(data.hours?.closeTime || "22:00");
+        setStart((prev) =>
+          data.availableStarts?.includes(prev)
+            ? prev
+            : data.availableStarts?.[0] || "",
+        );
+      })
+      .catch((err: Error) => {
+        if (cancelled) return;
+        setAvailableStarts([]);
+        setAvailabilityError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setAvailabilityLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, date, roomId, durationHours]);
+
+  const end = start ? addHoursToTime(start, durationHours) : "";
+  const hours = durationHours;
 
   const studioSubtotal = useMemo(() => {
     if (packageId === "series") return PACKAGES.series.sampleTotal;
@@ -319,38 +369,99 @@ export function BookingModal() {
           {step === "times" && (
             <StepShell
               eyebrow="Step 3"
-              title="Start and end"
+              title="Available times"
               onBack={() => backFrom("times")}
-              onNext={() => nextFrom("times")}
+              onNext={() => {
+                if (!start || !availableStarts.includes(start)) {
+                  setError("Pick an available start time for this room and day.");
+                  return;
+                }
+                setError("");
+                nextFrom("times");
+              }}
+              error={error}
             >
-              <div className="grid grid-cols-2 gap-4">
-                <label>
-                  <span className="font-caps text-[0.65rem] text-muted">
-                    Start
-                  </span>
-                  <input
-                    type="time"
-                    className="input mt-2"
-                    value={start}
-                    onChange={(e) => setStart(e.target.value)}
-                  />
-                </label>
-                <label>
-                  <span className="font-caps text-[0.65rem] text-muted">End</span>
-                  <input
-                    type="time"
-                    className="input mt-2"
-                    value={end}
-                    onChange={(e) => setEnd(e.target.value)}
-                  />
-                </label>
-              </div>
-              <p className="mt-4 text-paper-dim">
-                {hours} hour{hours === 1 ? "" : "s"} booked (two-hour minimum
-                enforced). Live total uses {rateLabel}
-                {packageId === "session" ? `: $${studioSubtotal}` : ""}.
+              <label className="block">
+                <span className="font-caps text-[0.65rem] text-muted">
+                  Session length
+                </span>
+                <select
+                  className="select mt-2"
+                  value={durationHours}
+                  onChange={(e) => setDurationHours(Number(e.target.value))}
+                >
+                  {DURATION_OPTIONS.map((h) => (
+                    <option key={h} value={h}>
+                      {h} hours{h === ENGINEERED.minimumHours ? " (minimum)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <p className="mt-4 text-sm text-muted">
+                Studio hours {studioOpen}–{studioClose}. Only open starts for{" "}
+                <RoomName roomId={roomId} size="sm" className="text-sm" /> on{" "}
+                {date} are listed.
               </p>
-              {packageId === "session" && (
+
+              {availabilityLoading && (
+                <p className="mt-4 text-paper-dim">Checking the calendar…</p>
+              )}
+              {availabilityError && (
+                <p className="mt-4 text-sm text-accent">{availabilityError}</p>
+              )}
+
+              {!availabilityLoading && !availabilityError && (
+                <>
+                  {bookedBlocks.length > 0 && (
+                    <div className="mt-4 border border-rule bg-graphite p-3 text-sm text-muted">
+                      <p className="font-caps text-[0.6rem] text-muted">
+                        Already booked this day
+                      </p>
+                      <ul className="mt-2 space-y-1">
+                        {bookedBlocks.map((b) => (
+                          <li key={`${b.start}-${b.end}`}>
+                            {b.start}–{b.end}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {availableStarts.length === 0 ? (
+                    <p className="mt-6 text-paper-dim">
+                      No open {durationHours}-hour starts left in this room on{" "}
+                      {date}. Try another day, room, or shorter session.
+                    </p>
+                  ) : (
+                    <div className="mt-4 grid max-h-48 grid-cols-3 gap-2 overflow-y-auto sm:grid-cols-4">
+                      {availableStarts.map((slot) => (
+                        <button
+                          key={slot}
+                          type="button"
+                          className={`border px-2 py-3 font-caps text-[0.7rem] ${
+                            start === slot
+                              ? "border-cyan bg-graphite text-cyan"
+                              : "border-rule text-paper-dim hover:border-paper-dim"
+                          }`}
+                          onClick={() => setStart(slot)}
+                        >
+                          {slot}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {start && end && (
+                <p className="mt-4 text-paper-dim">
+                  Selected window: {start}–{end} ({hours}h). Live total uses{" "}
+                  {rateLabel}
+                  {packageId === "session" ? `: $${studioSubtotal}` : ""}.
+                </p>
+              )}
+              {packageId === "session" && start && (
                 <p className="mt-2 text-sm text-muted">
                   Math: {hours} × $
                   {clientType === "first-time"
