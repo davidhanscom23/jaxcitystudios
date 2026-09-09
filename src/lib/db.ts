@@ -115,7 +115,16 @@ export function getDb(): Database.Database {
   if (!hours) {
     db.prepare(
       `INSERT INTO studio_hours (id, open_time, close_time, slot_minutes, notes)
-       VALUES (1, '10:00', '22:00', 30, 'Sample studio hours — adjust in studio_hours table.')`,
+       VALUES (1, '10:00', '02:00', 30, 'Open 10 AM–2 AM · overnight close.')`,
+    ).run();
+  } else {
+    // Keep published hours in sync (10 AM–2 AM overnight).
+    db.prepare(
+      `UPDATE studio_hours
+       SET open_time = '10:00',
+           close_time = '02:00',
+           notes = 'Open 10 AM–2 AM · overnight close.'
+       WHERE id = 1`,
     ).run();
   }
 

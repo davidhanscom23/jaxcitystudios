@@ -44,7 +44,7 @@ SQLite file at `data/jaxcity.db` (gitignored). Tables: `rooms`, `studio_hours`, 
 - Booking modal loads that list and will not offer taken slots
 - Checkout holds the slot; PayPal capture confirms; Zelle stays held until manual confirm; cancel releases holds
 
-Default studio hours (sample, editable in DB): **10:00–22:00**, 30-minute slots, two-hour minimum.
+Default studio hours: **10 AM–2 AM** (overnight close), 30-minute slots, two-hour minimum.
 
 ## Scripts
 
