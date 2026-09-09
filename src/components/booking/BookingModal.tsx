@@ -673,17 +673,14 @@ export function BookingModal() {
               onNext={
                 payMethod === "zelle"
                   ? submitZelleHold
-                  : () =>
-                      setError(
-                        "Use the PayPal / Venmo buttons below to pay the deposit.",
-                      )
+                  : null
               }
               nextLabel={
                 payMethod === "zelle"
                   ? busy
                     ? "Holding slot…"
                     : `Hold slot · pay $${deposit} by Zelle`
-                  : "Pay with buttons below"
+                  : undefined
               }
               error={error}
             >
@@ -708,7 +705,10 @@ export function BookingModal() {
                       ? "border-cyan bg-graphite text-cyan"
                       : "border-rule"
                   }`}
-                  onClick={() => setPayMethod("paypal")}
+                  onClick={() => {
+                    setPayMethod("paypal");
+                    setError("");
+                  }}
                 >
                   PayPal / Venmo
                 </button>
@@ -719,7 +719,10 @@ export function BookingModal() {
                       ? "border-cyan bg-graphite text-cyan"
                       : "border-rule"
                   }`}
-                  onClick={() => setPayMethod("zelle")}
+                  onClick={() => {
+                    setPayMethod("zelle");
+                    setError("");
+                  }}
                 >
                   Zelle
                 </button>
@@ -835,7 +838,7 @@ function StepShell({
   title: string;
   children: ReactNode;
   onBack: (() => void) | null;
-  onNext: ((e?: FormEvent) => void) | (() => void);
+  onNext: ((e?: FormEvent) => void) | (() => void) | null;
   nextLabel?: string;
   secondary?: { label: string; onClick: () => void };
   error?: string;
@@ -859,9 +862,11 @@ function StepShell({
             {secondary.label}
           </button>
         )}
-        <button type="button" className="btn btn-solid" onClick={() => onNext()}>
-          {nextLabel}
-        </button>
+        {onNext && (
+          <button type="button" className="btn btn-solid" onClick={() => onNext()}>
+            {nextLabel}
+          </button>
+        )}
       </div>
     </div>
   );
