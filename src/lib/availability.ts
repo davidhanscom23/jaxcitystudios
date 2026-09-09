@@ -146,6 +146,60 @@ export function getAvailableStarts(
   };
 }
 
+/** Inclusive YYYY-MM-DD range of days that still have at least one open start. */
+export function getAvailableDates(
+  roomId: RoomId,
+  fromDate: string,
+  toDate: string,
+  durationHours: number,
+): {
+  availableDates: string[];
+  unavailableDates: string[];
+  durationHours: number;
+} {
+  const duration = Math.max(durationHours, ENGINEERED.minimumHours);
+  const availableDates: string[] = [];
+  const unavailableDates: string[] = [];
+
+  const from = parseYmd(fromDate);
+  const to = parseYmd(toDate);
+  if (!from || !to || from > to) {
+    return { availableDates, unavailableDates, durationHours: duration };
+  }
+
+  const todayYmd = formatYmd(new Date());
+  for (let d = new Date(from); d <= to; d.setUTCDate(d.getUTCDate() + 1)) {
+    const ymd = formatYmd(d);
+    if (ymd < todayYmd) {
+      unavailableDates.push(ymd);
+      continue;
+    }
+    const { availableStarts } = getAvailableStarts(roomId, ymd, duration);
+    if (availableStarts.length > 0) availableDates.push(ymd);
+    else unavailableDates.push(ymd);
+  }
+
+  return { availableDates, unavailableDates, durationHours: duration };
+}
+
+function parseYmd(ymd: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return null;
+  const [y, m, d] = ymd.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  if (
+    dt.getUTCFullYear() !== y ||
+    dt.getUTCMonth() !== m - 1 ||
+    dt.getUTCDate() !== d
+  ) {
+    return null;
+  }
+  return dt;
+}
+
+function formatYmd(d: Date): string {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
 export type CreateBookingInput = {
   roomId: RoomId;
   date: string;
