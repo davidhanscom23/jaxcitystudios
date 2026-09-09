@@ -52,6 +52,12 @@ export function SiteHeader() {
           <button type="button" className="btn btn-solid" onClick={() => openBooking()}>
             Book
           </button>
+          <Link
+            href="/app"
+            className="font-caps text-[0.72rem] text-muted no-underline hover:text-paper"
+          >
+            Phone app
+          </Link>
         </nav>
 
         <button
@@ -87,6 +93,13 @@ export function SiteHeader() {
             >
               Book
             </button>
+            <Link
+              href="/app"
+              className="font-caps text-sm text-muted no-underline"
+              onClick={() => setOpen(false)}
+            >
+              Phone app
+            </Link>
           </nav>
         </div>
       )}

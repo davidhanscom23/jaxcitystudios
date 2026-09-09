@@ -1,11 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Archivo_Black, Barlow_Condensed, Newsreader } from "next/font/google";
 import "./globals.css";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SiteFooter } from "@/components/SiteFooter";
-import { OfferPopup } from "@/components/OfferPopup";
-import { Chatbot } from "@/components/Chatbot";
-import { BookingProvider } from "@/components/booking/BookingProvider";
 import { localBusinessJsonLd, pageMeta } from "@/lib/seo";
 
 const display = Archivo_Black({
@@ -40,6 +35,26 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://jaxcitystudios.com",
   ),
+  applicationName: "JaxCity Studios",
+  appleWebApp: {
+    capable: true,
+    title: "JaxCity Book",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#050508",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -58,13 +73,7 @@ export default function RootLayout({
             __html: JSON.stringify(localBusinessJsonLd),
           }}
         />
-        <BookingProvider>
-          <SiteHeader />
-          <main>{children}</main>
-          <SiteFooter />
-          <OfferPopup />
-          <Chatbot />
-        </BookingProvider>
+        {children}
       </body>
     </html>
   );

@@ -22,6 +22,8 @@ export type PlannerSnapshot = {
   title?: string;
 };
 
+export type BookingPresentation = "modal" | "standalone";
+
 type BookingContextValue = {
   open: boolean;
   openBooking: (opts?: {
@@ -33,14 +35,26 @@ type BookingContextValue = {
   initialRoomId?: RoomId;
   initialPackageId?: string;
   planner?: PlannerSnapshot | null;
+  presentation: BookingPresentation;
 };
 
 const BookingContext = createContext<BookingContextValue | null>(null);
 
-export function BookingProvider({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState(false);
+export function BookingProvider({
+  children,
+  presentation = "modal",
+  defaultOpen = false,
+}: {
+  children: ReactNode;
+  presentation?: BookingPresentation;
+  /** When true (book app), the flow mounts open and stays full-screen. */
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen || presentation === "standalone");
   const [initialRoomId, setInitialRoomId] = useState<RoomId | undefined>();
-  const [initialPackageId, setInitialPackageId] = useState<string | undefined>();
+  const [initialPackageId, setInitialPackageId] = useState<string | undefined>(
+    presentation === "standalone" ? "session" : undefined,
+  );
   const [planner, setPlanner] = useState<PlannerSnapshot | null>(null);
 
   const openBooking = useCallback(
@@ -50,14 +64,25 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       planner?: PlannerSnapshot;
     }) => {
       setInitialRoomId(opts?.roomId);
-      setInitialPackageId(opts?.packageId);
+      setInitialPackageId(
+        opts?.packageId ??
+          (presentation === "standalone" ? "session" : undefined),
+      );
       setPlanner(opts?.planner ?? null);
       setOpen(true);
     },
-    [],
+    [presentation],
   );
 
-  const closeBooking = useCallback(() => setOpen(false), []);
+  const closeBooking = useCallback(() => {
+    if (presentation === "standalone") {
+      // Standalone app stays on the booking flow; reset by reopening.
+      setOpen(false);
+      queueMicrotask(() => setOpen(true));
+      return;
+    }
+    setOpen(false);
+  }, [presentation]);
 
   const value = useMemo(
     () => ({
@@ -67,6 +92,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       initialRoomId,
       initialPackageId,
       planner,
+      presentation,
     }),
     [
       open,
@@ -75,6 +101,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       initialRoomId,
       initialPackageId,
       planner,
+      presentation,
     ],
   );
 
