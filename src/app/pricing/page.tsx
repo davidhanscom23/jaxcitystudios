@@ -10,6 +10,7 @@ import {
 } from "@/lib/rates";
 import { pageMeta } from "@/lib/seo";
 import { PricingActions } from "@/components/PricingActions";
+import { RoomName } from "@/components/RoomName";
 
 export const metadata = pageMeta({
   title: "Recording Studio Prices Jacksonville | JaxCity Studios Rates",
@@ -133,8 +134,12 @@ export default function PricingPage() {
             <tbody>
               {ROOMS.map((r) => (
                 <tr key={r.id} className="border-b border-rule/70">
-                  <td className="px-4 py-4 font-display text-xl">{r.name}</td>
-                  <td className="px-4 py-4">${r.hourly}/hr</td>
+                  <td className="px-4 py-4 text-xl">
+                    <RoomName roomId={r.id} size="md" />
+                  </td>
+                  <td className="px-4 py-4" style={{ color: r.color }}>
+                    ${r.hourly}/hr
+                  </td>
                   <td className="px-4 py-4 text-muted">{r.fit}</td>
                 </tr>
               ))}

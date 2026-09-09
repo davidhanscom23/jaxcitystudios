@@ -35,6 +35,9 @@ export const ROOMS = [
     maxPeople: 2,
     maxCameras: 1,
     fit: "Solo takes, voiceover, intimate one-on-one.",
+    color: "#b24bf3",
+    colorName: "violet",
+    planet: "/images/planets/mercury.png",
   },
   {
     id: "venus",
@@ -43,6 +46,9 @@ export const ROOMS = [
     maxPeople: 3,
     maxCameras: 2,
     fit: "Duo podcasts, acoustic pairs, two-camera setups.",
+    color: "#f5c518",
+    colorName: "gold",
+    planet: "/images/planets/venus.png",
   },
   {
     id: "earth",
@@ -51,6 +57,9 @@ export const ROOMS = [
     maxPeople: 4,
     maxCameras: 3,
     fit: "Panel conversations, band tracking, three-camera video.",
+    color: "#2ee6ff",
+    colorName: "cyan",
+    planet: "/images/planets/earth.png",
   },
   {
     id: "mars",
@@ -59,6 +68,9 @@ export const ROOMS = [
     maxPeople: 6,
     maxCameras: 4,
     fit: "Full live rooms, four-camera shoots, larger ensembles.",
+    color: "#ff3b5c",
+    colorName: "hot-red",
+    planet: "/images/planets/mars.png",
   },
 ] as const;
 

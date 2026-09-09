@@ -16,6 +16,7 @@ import {
 } from "@/lib/planner";
 import { ENGINEERED, ROOMS, type RoomId } from "@/lib/rates";
 import { useBooking } from "@/components/booking/BookingProvider";
+import { RoomName, RoomPlanet } from "@/components/RoomName";
 
 export function PlannerPage() {
   const { openBooking } = useBooking();
@@ -121,17 +122,20 @@ export function PlannerPage() {
             </label>
             <label className="text-sm">
               Room
-              <select
-                className="select mt-1"
-                value={roomId}
-                onChange={(e) => setRoomId(e.target.value as RoomId)}
-              >
-                {ROOMS.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} · room-only ${r.hourly}/hr
-                  </option>
-                ))}
-              </select>
+              <span className="mt-1 flex items-center gap-2">
+                <RoomPlanet roomId={roomId} size="md" />
+                <select
+                  className="select"
+                  value={roomId}
+                  onChange={(e) => setRoomId(e.target.value as RoomId)}
+                >
+                  {ROOMS.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name} · room-only ${r.hourly}/hr
+                    </option>
+                  ))}
+                </select>
+              </span>
             </label>
           </div>
         </div>
@@ -191,11 +195,17 @@ export function PlannerPage() {
               </li>
               <li>Studio cost: ${result.studioCost}</li>
               <li>
-                Room: {result.room.name}
+                Room:{" "}
+                <RoomName roomId={result.room.id} size="sm" className="align-middle text-base" />
                 {!result.fits && (
                   <span className="text-accent">
                     {" "}
-                    — config exceeds this room. Suggested: {result.suggested.name}
+                    — config exceeds this room. Suggested:{" "}
+                    <RoomName
+                      roomId={result.suggested.id}
+                      size="sm"
+                      className="align-middle text-base"
+                    />
                   </span>
                 )}
                 {result.fits && (

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -19,15 +20,18 @@ export function SiteHeader() {
   const { openBooking } = useBooking();
 
   return (
-    <header className="no-print sticky top-0 z-40 border-b border-rule/80 bg-ink/90 backdrop-blur-md">
-      <div className="wide-margin flex items-center justify-between gap-6 py-4">
-        <Link href="/" className="group no-underline">
-          <span className="font-caps text-[0.7rem] text-muted">
-            Jacksonville · FL
-          </span>
-          <div className="font-display text-xl tracking-tight text-paper group-hover:text-paper-dim sm:text-2xl">
-            JaxCity Studios
-          </div>
+    <header className="no-print sticky top-0 z-40 border-b border-rule/80 bg-ink/85 backdrop-blur-md">
+      <div className="wide-margin flex items-center justify-between gap-6 py-3">
+        <Link href="/" className="group flex items-center gap-3 no-underline">
+          <Image
+            src="/images/logo-header.png"
+            alt="JaxCity Studios"
+            width={160}
+            height={107}
+            className="h-12 w-auto sm:h-14"
+            priority
+          />
+          <span className="sr-only">JaxCity Studios — Jacksonville, FL</span>
         </Link>
 
         <nav className="hidden items-center gap-7 lg:flex">
@@ -37,7 +41,7 @@ export function SiteHeader() {
               href={l.href}
               className={`font-caps text-[0.72rem] no-underline transition-colors ${
                 pathname?.startsWith(l.href)
-                  ? "text-paper"
+                  ? "text-cyan text-glow-cyan"
                   : "text-muted hover:text-paper"
               }`}
             >
@@ -51,7 +55,7 @@ export function SiteHeader() {
 
         <button
           type="button"
-          className="font-caps text-[0.75rem] text-paper lg:hidden"
+          className="font-caps text-[0.75rem] text-cyan lg:hidden"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
         >
