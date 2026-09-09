@@ -26,6 +26,11 @@ import {
   type RoomId,
 } from "@/lib/rates";
 import { PUBLIC_PAYMENTS } from "@/lib/payments-public";
+import {
+  addHoursToTime,
+  formatClock12,
+  formatTimeRange12,
+} from "@/lib/time";
 
 type Step =
   | "date-room"
@@ -44,14 +49,6 @@ const STEPS: Step[] = [
   "addon",
   "checkout",
 ];
-
-function addHoursToTime(start: string, durationHours: number): string {
-  const [sh, sm] = start.split(":").map(Number);
-  const total = sh * 60 + sm + Math.round(durationHours * 60);
-  const eh = Math.floor(total / 60);
-  const em = total % 60;
-  return `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
-}
 
 const DURATION_OPTIONS = [2, 3, 4, 6, 8];
 
@@ -89,7 +86,7 @@ export function BookingModal() {
     { start: string; end: string; status: string }[]
   >([]);
   const [studioOpen, setStudioOpen] = useState("10:00");
-  const [studioClose, setStudioClose] = useState("22:00");
+  const [studioClose, setStudioClose] = useState("02:00");
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availabilityError, setAvailabilityError] = useState("");
   const [payMethod, setPayMethod] = useState<"paypal" | "zelle">("paypal");
@@ -141,7 +138,7 @@ export function BookingModal() {
         setAvailableStarts(data.availableStarts || []);
         setBookedBlocks(data.bookedBlocks || []);
         setStudioOpen(data.hours?.openTime || "10:00");
-        setStudioClose(data.hours?.closeTime || "22:00");
+        setStudioClose(data.hours?.closeTime || "02:00");
         setStart((prev) =>
           data.availableStarts?.includes(prev)
             ? prev
@@ -332,7 +329,7 @@ export function BookingModal() {
       }
       setBookingId(data.bookingId || "");
       setDoneMsg(
-        `Slot held pending Zelle. Send $${deposit} to ${PUBLIC_PAYMENTS.zelleDestination} (name: ${PUBLIC_PAYMENTS.zelleName}). Include your name and ${date} ${start} in the memo. Remaining $${balance} due on arrival. Ref: ${data.bookingId}`,
+        `Slot held pending Zelle. Send $${deposit} to ${PUBLIC_PAYMENTS.zelleDestination} (name: ${PUBLIC_PAYMENTS.zelleName}). Include your name and ${date} ${formatClock12(start)} in the memo. Remaining $${balance} due on arrival. Ref: ${data.bookingId}`,
       );
       setStep("done");
     } catch {
@@ -485,7 +482,8 @@ export function BookingModal() {
               </label>
 
               <p className="mt-4 text-sm text-muted">
-                Studio hours {studioOpen}–{studioClose}. Only open starts for{" "}
+                Studio hours {formatTimeRange12(studioOpen, studioClose)}. Only
+                open starts for{" "}
                 <RoomName roomId={roomId} size="sm" className="text-sm" /> on{" "}
                 {date} are listed.
               </p>
@@ -507,7 +505,7 @@ export function BookingModal() {
                       <ul className="mt-2 space-y-1">
                         {bookedBlocks.map((b) => (
                           <li key={`${b.start}-${b.end}`}>
-                            {b.start}–{b.end}
+                            {formatTimeRange12(b.start, b.end)}
                           </li>
                         ))}
                       </ul>
@@ -532,7 +530,7 @@ export function BookingModal() {
                           }`}
                           onClick={() => setStart(slot)}
                         >
-                          {slot}
+                          {formatClock12(slot)}
                         </button>
                       ))}
                     </div>
@@ -542,8 +540,8 @@ export function BookingModal() {
 
               {start && end && (
                 <p className="mt-4 text-paper-dim">
-                  Selected window: {start}–{end} ({hours}h). Live total uses{" "}
-                  {rateLabel}
+                  Selected window: {formatTimeRange12(start, end)} ({hours}h).
+                  Live total uses {rateLabel}
                   {packageId === "session" ? `: $${studioSubtotal}` : ""}.
                 </p>
               )}
@@ -694,7 +692,10 @@ export function BookingModal() {
                   value={<RoomName roomId={roomId} size="sm" className="text-sm" />}
                 />
                 <Row label="Date" value={date} />
-                <Row label="Time" value={`${start}–${end} (${hours}h)`} />
+                <Row
+                  label="Time"
+                  value={`${formatTimeRange12(start, end)} (${hours}h)`}
+                />
               </dl>
 
               <div className="mt-6 grid grid-cols-2 gap-2">
@@ -764,7 +765,8 @@ export function BookingModal() {
                     .
                   </p>
                   <p className="mt-2">
-                    Memo: your name · {date} · {start}. Remaining ${balance} due
+                    Memo: your name · {date} · {formatClock12(start)}. Remaining
+                    ${balance} due
                     on arrival. The studio confirms the calendar hold after the
                     transfer posts.
                   </p>

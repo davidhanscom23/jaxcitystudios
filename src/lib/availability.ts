@@ -1,6 +1,11 @@
 import { randomUUID } from "crypto";
 import { ENGINEERED, type RoomId } from "@/lib/rates";
 import { getDb } from "@/lib/db";
+import {
+  minutesToTime,
+  studioCloseBoundary,
+  toStudioDayMinutes,
+} from "@/lib/time";
 
 export type StudioHours = {
   openTime: string;
@@ -37,16 +42,7 @@ export function getStudioHours(): StudioHours {
   };
 }
 
-export function timeToMinutes(t: string): number {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
-}
-
-export function minutesToTime(mins: number): string {
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
+export { timeToMinutes, minutesToTime } from "@/lib/time";
 
 export function getBookingsForDay(roomId: RoomId, date: string): BookingRow[] {
   return getDb()
@@ -78,10 +74,15 @@ export function isSlotAvailable(
   excludeBookingId?: string,
 ): boolean {
   const hours = getStudioHours();
-  const open = timeToMinutes(hours.openTime);
-  const close = timeToMinutes(hours.closeTime);
-  const startM = timeToMinutes(start);
-  const endM = timeToMinutes(end);
+  const { open, close, overnight } = studioCloseBoundary(
+    hours.openTime,
+    hours.closeTime,
+  );
+  const startM = toStudioDayMinutes(start, open, overnight);
+  let endM = toStudioDayMinutes(end, open, overnight);
+  // End that wraps past midnight without landing in the overnight window
+  // (e.g. start 23:00 → end 01:00) still needs +24h when end clock < start clock.
+  if (endM <= startM) endM += 24 * 60;
 
   if (endM <= startM) return false;
   if (startM < open || endM > close) return false;
@@ -90,14 +91,10 @@ export function isSlotAvailable(
   const existing = getBookingsForDay(roomId, date);
   for (const b of existing) {
     if (excludeBookingId && b.id === excludeBookingId) continue;
-    if (
-      rangesOverlap(
-        startM,
-        endM,
-        timeToMinutes(b.start_time),
-        timeToMinutes(b.end_time),
-      )
-    ) {
+    const bStart = toStudioDayMinutes(b.start_time, open, overnight);
+    let bEnd = toStudioDayMinutes(b.end_time, open, overnight);
+    if (bEnd <= bStart) bEnd += 24 * 60;
+    if (rangesOverlap(startM, endM, bStart, bEnd)) {
       return false;
     }
   }
@@ -117,16 +114,11 @@ export function getAvailableStarts(
   const hours = getStudioHours();
   const duration = Math.max(durationHours, ENGINEERED.minimumHours);
   const durationMins = Math.round(duration * 60);
-  const open = timeToMinutes(hours.openTime);
-  const close = timeToMinutes(hours.closeTime);
+  const { open, close } = studioCloseBoundary(hours.openTime, hours.closeTime);
   const booked = getBookingsForDay(roomId, date);
 
   const availableStarts: string[] = [];
-  for (
-    let t = open;
-    t + durationMins <= close;
-    t += hours.slotMinutes
-  ) {
+  for (let t = open; t + durationMins <= close; t += hours.slotMinutes) {
     const start = minutesToTime(t);
     const end = minutesToTime(t + durationMins);
     if (isSlotAvailable(roomId, date, start, end)) {
