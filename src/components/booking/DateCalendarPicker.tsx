@@ -80,15 +80,43 @@ export function DateCalendarPicker({
       `/api/availability/dates?room=${roomId}&from=${from}&to=${to}&hours=${durationHours}`,
     )
       .then(async (res) => {
-        const data = await res.json();
+        const raw = await res.text();
+        let data: {
+          availableDates?: string[];
+          error?: string;
+        } = {};
+        if (raw) {
+          try {
+            data = JSON.parse(raw) as typeof data;
+          } catch {
+            throw new Error(
+              res.ok
+                ? "Availability response was not valid JSON."
+                : `Could not load dates (HTTP ${res.status}).`,
+            );
+          }
+        } else if (!res.ok) {
+          throw new Error(`Could not load dates (HTTP ${res.status}).`);
+        }
         if (!res.ok) throw new Error(data.error || "Could not load dates");
         if (cancelled) return;
         setAvailable(new Set(data.availableDates || []));
       })
       .catch((err: Error) => {
         if (cancelled) return;
-        setAvailable(new Set());
-        setLoadError(err.message);
+        // Soft fallback: keep future in-month days selectable so a
+        // temporary API outage does not strike out the whole calendar.
+        const fallback = days
+          .filter(
+            (day) =>
+              isSameMonth(day, month) && !isBefore(day, todayLocal()),
+          )
+          .map(toYmd);
+        setAvailable(new Set(fallback));
+        setLoadError(
+          err.message ||
+            "Live availability unavailable — showing open days; confirm times on the next step.",
+        );
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -96,7 +124,7 @@ export function DateCalendarPicker({
     return () => {
       cancelled = true;
     };
-  }, [open, month, roomId, durationHours]);
+  }, [open, month, roomId, durationHours, days]);
 
   useEffect(() => {
     if (!open) return;
@@ -240,7 +268,7 @@ export function DateCalendarPicker({
             {loading
               ? "Checking open days for this room…"
               : loadError
-                ? loadError
+                ? `Showing open days for now. ${loadError}`
                 : "Highlighted days still have open starts for the selected room."}
           </p>
         </div>
