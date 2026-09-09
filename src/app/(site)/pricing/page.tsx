@@ -28,13 +28,39 @@ export default function PricingPage() {
         Upfront pricing
       </h1>
       <p className="mt-6 max-w-2xl text-paper-dim">
-        How the two rates relate: the hourly rate of ${ENGINEERED.firstTimeHourly}{" "}
-        or ${ENGINEERED.returningHourly} is an engineered session and includes
-        the room. The room rates of ${ROOMS[0].hourly} to $
-        {ROOMS[ROOMS.length - 1].hourly} are room-only, for clients bringing
-        their own engineer, and are the hourly companion to the $
-        {DAY_RATE.startingAt} day rate. The two do not stack.
+        Two doors: hourly studio sessions (music or podcast), and{" "}
+        <Link href="/company-show" className="text-cyan">
+          The Company Show
+        </Link>{" "}
+        — a done-for-you monthly content show for Northeast Florida businesses.
+        Hourly engineered rates of ${ENGINEERED.firstTimeHourly} or $
+        {ENGINEERED.returningHourly} include the room. Room-only rates of $
+        {ROOMS[0].hourly}–${ROOMS[ROOMS.length - 1].hourly} are the companion
+        to the ${DAY_RATE.startingAt} day rate and do not stack with engineered.
       </p>
+
+      <section className="mt-12 border border-cyan/40 bg-ink p-6 sm:p-8">
+        <p className="font-caps text-[18px] text-cyan">Soft launch</p>
+        <h2 className="font-display mt-3 text-3xl sm:text-4xl">
+          The Company Show
+        </h2>
+        <p className="mt-3 max-w-2xl text-paper-dim">
+          You show up. We handle everything else — host, Episode Blueprint,
+          multi-cam, edit, clips, publish. Founding rate $1,495/mo for 3 months
+          (normally $1,995). Pilot episode $750.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-6 font-caps text-[18px] text-paper">
+          <span>Starter $995/mo</span>
+          <span className="text-cyan">Business $1,995/mo</span>
+          <span>Authority $2,995/mo</span>
+        </div>
+        <Link
+          href="/company-show"
+          className="btn btn-solid mt-8 inline-flex no-underline"
+        >
+          See The Company Show
+        </Link>
+      </section>
 
       <div className="photo-wrap neon-frame relative mt-12 aspect-[21/9] min-h-[12rem] overflow-hidden sm:mt-16">
         <Image
@@ -93,11 +119,18 @@ export default function PricingPage() {
                   {PACKAGES.series.samplePostProduction}
                 </li>
               </ul>
-              <p className="mt-4 text-xs text-accent">{PACKAGES.series.researchNote}</p>
-            </>
-          }
-          packageId="series"
-        />
+                  <p className="mt-4 text-xs text-accent">{PACKAGES.series.researchNote}</p>
+                  <p className="mt-4 text-sm text-paper-dim">
+                    Want a hosted monthly show instead?{" "}
+                    <Link href="/company-show" className="text-cyan">
+                      The Company Show
+                    </Link>
+                    .
+                  </p>
+                </>
+              }
+              packageId="series"
+            />
         <PackageCard
           name={PACKAGES.partner.name}
           tagline={PACKAGES.partner.tagline}
@@ -186,7 +219,10 @@ export default function PricingPage() {
       </section>
 
       <div className="mt-16 flex flex-wrap gap-3">
-        <Link href="/planner" className="btn btn-solid no-underline">
+        <Link href="/company-show" className="btn btn-solid no-underline">
+          The Company Show
+        </Link>
+        <Link href="/planner" className="btn no-underline">
           Build Your Show
         </Link>
         <PricingActions />

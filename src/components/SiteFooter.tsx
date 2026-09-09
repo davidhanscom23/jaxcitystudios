@@ -55,6 +55,9 @@ export function SiteFooter() {
                 <Link href="/lineup">Lineup</Link>
               </li>
               <li>
+                <Link href="/company-show">Company Show</Link>
+              </li>
+              <li>
                 <Link href="/pricing">Pricing</Link>
               </li>
               <li>
