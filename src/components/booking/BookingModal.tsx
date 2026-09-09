@@ -481,11 +481,47 @@ export function BookingModal() {
                 </select>
               </label>
 
+              <div className="mt-6">
+                <span className="font-caps text-[0.65rem] text-muted">Room</span>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {ROOMS.map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      className={`border px-3 py-2.5 text-left transition-colors ${
+                        roomId === r.id
+                          ? "border-paper bg-graphite"
+                          : "border-rule hover:border-paper-dim"
+                      }`}
+                      style={
+                        roomId === r.id
+                          ? {
+                              borderColor: r.color,
+                              boxShadow: `0 0 12px ${r.color}55`,
+                            }
+                          : undefined
+                      }
+                      onClick={() => {
+                        if (r.id === roomId) return;
+                        setRoomId(r.id);
+                        setStart("");
+                        setError("");
+                      }}
+                    >
+                      <RoomName roomId={r.id} size="sm" className="text-base" />
+                      <span className="mt-0.5 block text-xs text-muted">
+                        ${r.hourly}/hr room-only
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <p className="mt-4 text-sm text-muted">
-                Studio hours {formatTimeRange12(studioOpen, studioClose)}. Only
-                open starts for{" "}
+                Studio hours {formatTimeRange12(studioOpen, studioClose)}. Open
+                starts for{" "}
                 <RoomName roomId={roomId} size="sm" className="text-sm" /> on{" "}
-                {date} are listed.
+                {date} update when you switch rooms.
               </p>
 
               {availabilityLoading && (
