@@ -73,8 +73,8 @@ export function ReviewsSection() {
               From the rooms
             </h2>
             <p className="mt-4 text-paper-dim">
-              Music nights and podcast days — session notes from both sides of
-              the glass. More live quotes coming as they land.
+              What artists and hosts say after a night or a show day in the
+              room. More live quotes coming as they land.
             </p>
           </div>
           <a
