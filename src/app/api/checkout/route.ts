@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  isPodcastOfferId,
+  podcastOfferPrice,
+  type BookingService,
+  type PodcastOfferId,
+} from "@/lib/booking-service";
+import {
   ADDONS,
   DEPOSIT,
   INTRO_PROMO,
@@ -33,6 +39,8 @@ export async function POST(req: NextRequest) {
     roomId,
     packageId,
     rateMode: rawRateMode,
+    service: rawService,
+    podcastOffer: rawPodcastOffer,
     start,
     end,
     hours,
@@ -56,14 +64,35 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const service: BookingService =
+    rawService === "podcast" ? "podcast" : "music";
+  const podcastOffer: PodcastOfferId | null =
+    service === "podcast" && isPodcastOfferId(String(rawPodcastOffer || ""))
+      ? (rawPodcastOffer as PodcastOfferId)
+      : null;
+
+  if (service === "podcast" && !podcastOffer) {
+    return NextResponse.json(
+      { error: "Pick a podcast offer before checkout." },
+      { status: 400 },
+    );
+  }
+
   const rateMode: RateMode =
-    rawRateMode === "room-only" ? "room-only" : "engineered";
+    service === "podcast"
+      ? podcastOffer === "diy"
+        ? "room-only"
+        : "engineered"
+      : rawRateMode === "room-only"
+        ? "room-only"
+        : "engineered";
 
   const eligibility = getClientEligibility(email, phone);
   const clientType: "first-time" | "returning" =
     rawClientType === "returning" ? "returning" : "first-time";
 
   if (
+    service === "music" &&
     rateMode === "engineered" &&
     clientType === "first-time" &&
     !eligibility.canUseFirstTime
@@ -80,6 +109,7 @@ export async function POST(req: NextRequest) {
   }
 
   const wantsIntro =
+    service === "music" &&
     rateMode === "engineered" &&
     (rawApplyIntro === true ||
       rawPromoId === INTRO_PROMO.id ||
@@ -126,18 +156,33 @@ export async function POST(req: NextRequest) {
   }
 
   // Recalculate studio + addons so clients cannot underpay via spoofed totals.
-  const pkg = rateMode === "room-only" ? "session" : packageId || "session";
-  const studioSubtotal = bookingStudioTotal({
-    rateMode,
-    roomId: roomId as RoomId,
-    hours: hoursN,
-    clientType,
-    applyIntroPromo,
-    packageId: pkg,
-  });
+  const pkg =
+    service === "podcast"
+      ? `podcast:${podcastOffer}`
+      : rateMode === "room-only"
+        ? "session"
+        : packageId || "session";
+
+  let studioSubtotal: number;
+  if (service === "podcast" && podcastOffer) {
+    studioSubtotal = podcastOfferPrice(
+      podcastOffer,
+      roomId as RoomId,
+      hoursN,
+    );
+  } else {
+    studioSubtotal = bookingStudioTotal({
+      rateMode,
+      roomId: roomId as RoomId,
+      hours: hoursN,
+      clientType,
+      applyIntroPromo,
+      packageId: packageId || "session",
+    });
+  }
 
   const addonIds: string[] =
-    rateMode === "room-only"
+    service === "podcast" || rateMode === "room-only"
       ? []
       : Array.isArray(selectedAddons)
         ? selectedAddons
@@ -166,6 +211,8 @@ export async function POST(req: NextRequest) {
           balance: expectedBalance,
           promoId,
           rateMode,
+          service,
+          podcastOffer,
         },
       },
       { status: 400 },
@@ -198,7 +245,10 @@ export async function POST(req: NextRequest) {
     clientName: name,
     clientEmail: email,
     clientPhone: phone,
-    clientType: rateMode === "room-only" ? undefined : clientType,
+    clientType:
+      service === "podcast" || rateMode === "room-only"
+        ? undefined
+        : clientType,
     packageId: pkg,
     promoId,
     hours: hoursN,
@@ -207,8 +257,14 @@ export async function POST(req: NextRequest) {
     paymentMethod: method,
     notes:
       [
+        `Service: ${service}`,
+        service === "podcast" && podcastOffer
+          ? `Podcast offer: ${podcastOffer}`
+          : null,
         rateMode === "room-only"
-          ? "Rate mode: room-only (BYO engineer)"
+          ? service === "podcast"
+            ? "DIY room + equipment only (no host, no engineer)"
+            : "Rate mode: room-only (BYO engineer)"
           : null,
         planner
           ? `Planner attached (${String(planner.title || "show")})`
@@ -229,6 +285,8 @@ export async function POST(req: NextRequest) {
       bookingId: held.bookingId,
       promoId,
       rateMode,
+      service,
+      podcastOffer,
       message:
         "Slot held. Send the deposit by Zelle, then the studio will confirm.",
     });
@@ -249,7 +307,9 @@ export async function POST(req: NextRequest) {
     const order = await createPayPalOrder({
       amount: expectedDeposit,
       bookingId: held.bookingId,
-      description: `${STUDIO.name} 50% deposit · ${date} · ${roomId} · ${start}–${end} · ${rateMode}. ${DEPOSIT.policy} Balance $${expectedBalance} due on arrival.`,
+      description: `${STUDIO.name} 50% deposit · ${service}${
+        podcastOffer ? `/${podcastOffer}` : ""
+      } · ${date} · ${roomId} · ${start}–${end}. ${DEPOSIT.policy} Balance $${expectedBalance} due on arrival.`,
     });
 
     attachPaymentRef(held.bookingId, order.id, method);
@@ -260,6 +320,8 @@ export async function POST(req: NextRequest) {
       bookingId: held.bookingId,
       promoId,
       rateMode,
+      service,
+      podcastOffer,
       addons: addonIds,
     });
   } catch (err) {

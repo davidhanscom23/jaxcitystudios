@@ -14,6 +14,11 @@ import {
   recommendRoom,
   bookingStudioTotal,
 } from "../src/lib/rates";
+import {
+  podcastOfferPrice,
+  COMPANY_SHOW_SESSION_HOURS,
+} from "../src/lib/booking-service";
+import { COMPANY_SHOW } from "../src/data/company-show";
 import { answerPricingQuestion } from "../src/lib/chat";
 import { computePlanner, DEFAULT_SHOW } from "../src/lib/planner";
 
@@ -77,6 +82,20 @@ assert(
     }),
   ) === 25,
   "mercury room-only 50% deposit",
+);
+
+assert(
+  podcastOfferPrice("pilot", "venus", COMPANY_SHOW_SESSION_HOURS) ===
+    COMPANY_SHOW.pilot.price,
+  "pilot offer price",
+);
+assert(
+  podcastOfferPrice("diy", "mercury", 2) === 50,
+  "podcast diy uses room hourly",
+);
+assert(
+  podcastOfferPrice("business", "mars", 3) === 1995,
+  "business plan monthly",
 );
 
 const marsEng = answerPricingQuestion(

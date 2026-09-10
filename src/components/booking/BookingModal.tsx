@@ -9,11 +9,27 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useBooking } from "@/components/booking/BookingProvider";
 import { RoomName } from "@/components/RoomName";
 import { PayPalDepositButtons } from "@/components/booking/PayPalDepositButtons";
 import { DateCalendarPicker } from "@/components/booking/DateCalendarPicker";
+import {
+  COMPANY_SHOW,
+  COMPANY_SHOW_CORE,
+  COMPANY_SHOW_PLANS,
+} from "@/data/company-show";
+import {
+  BOOKING_SERVICE_CARDS,
+  COMPANY_SHOW_SESSION_HOURS,
+  PODCAST_DIY_DISCLAIMER,
+  podcastOfferLabel,
+  podcastOfferPrice,
+  podcastOfferShortLabel,
+  type BookingService,
+  type PodcastOfferId,
+} from "@/lib/booking-service";
 import {
   ADDONS,
   DEPOSIT,
@@ -38,7 +54,9 @@ import { BookingAgreementStep } from "@/components/booking/BookingAgreementStep"
 import type { AgreementFill } from "@/lib/rental-agreement";
 
 type Step =
+  | "service"
   | "date-room"
+  | "podcast-offer"
   | "package"
   | "times"
   | "contact"
@@ -46,18 +64,6 @@ type Step =
   | "checkout"
   | "agreement"
   | "done";
-
-const STEPS_MODAL: Step[] = [
-  "date-room",
-  "package",
-  "times",
-  "contact",
-  "addon",
-  "checkout",
-];
-
-/** Phone app: session only — skip packages and sample add-ons. */
-const STEPS_APP: Step[] = ["date-room", "times", "contact", "checkout"];
 
 const DURATION_OPTIONS = [2, 3, 4, 6, 8];
 
@@ -73,7 +79,11 @@ export function BookingModal() {
   const isApp = presentation === "standalone";
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const [step, setStep] = useState<Step>("date-room");
+  const [step, setStep] = useState<Step>("service");
+  const [service, setService] = useState<BookingService | null>(null);
+  const [podcastOffer, setPodcastOffer] = useState<PodcastOfferId | null>(
+    null,
+  );
   const [date, setDate] = useState("");
   const [roomId, setRoomId] = useState<RoomId>("venus");
   const [rateMode, setRateMode] = useState<RateMode>("engineered");
@@ -119,7 +129,9 @@ export function BookingModal() {
 
   useEffect(() => {
     if (!open) return;
-    setStep("date-room");
+    setStep("service");
+    setService(null);
+    setPodcastOffer(null);
     setAddonIndex(0);
     setSelectedAddons([]);
     setError("");
@@ -136,6 +148,7 @@ export function BookingModal() {
     setEligibility(null);
     setEligibilityLoading(false);
     setRateMode("engineered");
+    setDate("");
     if (initialRoomId) setRoomId(initialRoomId);
     if (planner?.roomId) setRoomId(planner.roomId);
     if (isApp) {
@@ -153,9 +166,47 @@ export function BookingModal() {
     }
   }, [open, initialRoomId, initialPackageId, planner, isApp]);
 
-  /** Room-only skips sample packages/add-ons — same path as the phone app. */
-  const skipPackagesAndAddons = isApp || rateMode === "room-only";
-  const flowSteps = skipPackagesAndAddons ? STEPS_APP : STEPS_MODAL;
+  const isPodcast = service === "podcast";
+  const isMusic = service === "music";
+  const podcastIsDiy = isPodcast && podcastOffer === "diy";
+  const podcastIsCompanyShow =
+    isPodcast && podcastOffer != null && podcastOffer !== "diy";
+
+  /** Music room-only / app / all podcast paths skip sample packages & add-ons. */
+  const skipPackagesAndAddons =
+    isApp || rateMode === "room-only" || isPodcast;
+
+  const flowSteps = useMemo((): Step[] => {
+    if (!service) return ["service"];
+    if (service === "podcast") {
+      return [
+        "service",
+        "date-room",
+        "podcast-offer",
+        "times",
+        "contact",
+        "checkout",
+      ];
+    }
+    if (isApp || rateMode === "room-only") {
+      return ["service", "date-room", "times", "contact", "checkout"];
+    }
+    return [
+      "service",
+      "date-room",
+      "package",
+      "times",
+      "contact",
+      "addon",
+      "checkout",
+    ];
+  }, [service, isApp, rateMode]);
+
+  function stepEyebrow(current: Step): string {
+    const idx = flowSteps.indexOf(current);
+    if (idx < 0) return "Step";
+    return `Step ${idx + 1}`;
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -242,27 +293,40 @@ export function BookingModal() {
   const selectedRoom = ROOMS.find((r) => r.id === roomId) ?? ROOMS[0];
 
   const applyIntroPromo =
+    isMusic &&
     rateMode === "engineered" &&
     packageId === "session" &&
     clientType === "first-time" &&
     hours === INTRO_PROMO.hours &&
     (eligibility?.canUseIntroPromo ?? true);
 
-  const studioSubtotal = useMemo(
-    () =>
-      bookingStudioTotal({
-        rateMode,
-        roomId,
-        hours,
-        clientType,
-        applyIntroPromo,
-        packageId,
-      }),
-    [rateMode, roomId, hours, clientType, applyIntroPromo, packageId],
-  );
+  const studioSubtotal = useMemo(() => {
+    if (!service) return 0;
+    if (service === "podcast") {
+      if (!podcastOffer) return 0;
+      return podcastOfferPrice(podcastOffer, roomId, hours);
+    }
+    return bookingStudioTotal({
+      rateMode,
+      roomId,
+      hours,
+      clientType,
+      applyIntroPromo,
+      packageId,
+    });
+  }, [
+    service,
+    podcastOffer,
+    rateMode,
+    roomId,
+    hours,
+    clientType,
+    applyIntroPromo,
+    packageId,
+  ]);
 
   const addonTotal =
-    rateMode === "room-only"
+    !isMusic || rateMode === "room-only"
       ? 0
       : selectedAddons.reduce((sum, id) => {
           const a = ADDONS.find((x) => x.id === id);
@@ -272,18 +336,56 @@ export function BookingModal() {
   const total = studioSubtotal + addonTotal;
   const deposit = depositAmount(total);
   const balance = balanceOnArrival(total);
-  const rateLabel =
-    rateMode === "room-only"
-      ? `$${selectedRoom.hourly}/hr room-only · ${selectedRoom.name}`
-      : packageId === "session"
-        ? applyIntroPromo
-          ? `${INTRO_PROMO.label} intro (first session)`
-          : clientType === "first-time"
-            ? `$${ENGINEERED.firstTimeHourly}/hr first-time engineered`
-            : `$${ENGINEERED.returningHourly}/hr returning engineered`
-        : packageId === "series"
-          ? "The Series (sample package total)"
-          : "The Studio Partner (sample monthly total)";
+  const showPricing = Boolean(
+    service && (service === "music" || podcastOffer),
+  );
+
+  const rateLabel = !service
+    ? "Choose music or podcast"
+    : service === "podcast"
+      ? podcastOffer
+        ? podcastOfferLabel(podcastOffer)
+        : "Pick a podcast offer"
+      : rateMode === "room-only"
+        ? `$${selectedRoom.hourly}/hr room-only · ${selectedRoom.name}`
+        : packageId === "session"
+          ? applyIntroPromo
+            ? `${INTRO_PROMO.label} intro (first session)`
+            : clientType === "first-time"
+              ? `$${ENGINEERED.firstTimeHourly}/hr first-time engineered`
+              : `$${ENGINEERED.returningHourly}/hr returning engineered`
+          : packageId === "series"
+            ? "The Series (sample package total)"
+            : "The Studio Partner (sample monthly total)";
+
+  function chooseService(next: BookingService) {
+    setService(next);
+    setPodcastOffer(null);
+    setError("");
+    if (next === "music") {
+      setRateMode("engineered");
+      setPackageId("session");
+      setDurationHours(ENGINEERED.minimumHours);
+    } else {
+      setRateMode("room-only");
+      setPackageId("session");
+      setSelectedAddons([]);
+      setDurationHours(COMPANY_SHOW_SESSION_HOURS);
+    }
+    setStep("date-room");
+  }
+
+  function choosePodcastOffer(offer: PodcastOfferId) {
+    setPodcastOffer(offer);
+    setError("");
+    if (offer === "diy") {
+      setRateMode("room-only");
+      setDurationHours((h) => Math.max(ENGINEERED.minimumHours, h));
+    } else {
+      setRateMode("engineered");
+      setDurationHours(COMPANY_SHOW_SESSION_HOURS);
+    }
+  }
 
   function nextFrom(current: Step) {
     if (current === "addon") {
@@ -324,6 +426,12 @@ export function BookingModal() {
       setStep("contact");
       return;
     }
+    if (current === "date-room") {
+      setService(null);
+      setPodcastOffer(null);
+      setStep("service");
+      return;
+    }
     const idx = flowSteps.indexOf(current);
     if (idx > 0) setStep(flowSteps[idx - 1]);
   }
@@ -352,7 +460,13 @@ export function BookingModal() {
         date,
         roomId,
         packageId,
-        rateMode,
+        rateMode: podcastIsDiy
+          ? "room-only"
+          : podcastIsCompanyShow
+            ? "engineered"
+            : rateMode,
+        service,
+        podcastOffer,
         start,
         end,
         hours,
@@ -360,7 +474,8 @@ export function BookingModal() {
         email,
         phone,
         clientType,
-        selectedAddons: rateMode === "room-only" ? [] : selectedAddons,
+        selectedAddons:
+          !isMusic || rateMode === "room-only" ? [] : selectedAddons,
         total,
         deposit,
         balance,
@@ -387,6 +502,11 @@ export function BookingModal() {
     roomId,
     packageId,
     rateMode,
+    service,
+    podcastOffer,
+    podcastIsDiy,
+    podcastIsCompanyShow,
+    isMusic,
     start,
     end,
     hours,
@@ -514,7 +634,13 @@ export function BookingModal() {
           date,
           roomId,
           packageId,
-          rateMode,
+          rateMode: podcastIsDiy
+            ? "room-only"
+            : podcastIsCompanyShow
+              ? "engineered"
+              : rateMode,
+          service,
+          podcastOffer,
           start,
           end,
           hours,
@@ -522,7 +648,8 @@ export function BookingModal() {
           email,
           phone,
           clientType,
-          selectedAddons: rateMode === "room-only" ? [] : selectedAddons,
+          selectedAddons:
+            !isMusic || rateMode === "room-only" ? [] : selectedAddons,
           total,
           deposit,
           balance,
@@ -601,11 +728,57 @@ export function BookingModal() {
             isApp ? "pb-32 pt-6" : "pb-28 pt-10"
           }`}
         >
-          {step === "date-room" && (
+          {step === "service" && (
+            <div>
+              <p className="font-caps text-[18px] text-muted">Step 1</p>
+              <h2 className="font-display mt-3 text-4xl sm:text-5xl">
+                What are you booking?
+              </h2>
+              <p className="mt-3 max-w-xl text-paper-dim">
+                Pick a path first. Pricing for that path only shows after you
+                choose.
+              </p>
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                {(
+                  [
+                    BOOKING_SERVICE_CARDS.music,
+                    BOOKING_SERVICE_CARDS.podcast,
+                  ] as const
+                ).map((card) => (
+                  <button
+                    key={card.id}
+                    type="button"
+                    className="group relative aspect-[4/5] overflow-hidden border border-rule text-left transition-[border-color,box-shadow] hover:border-paper focus-visible:border-cyan sm:aspect-[3/4]"
+                    onClick={() => chooseService(card.id)}
+                  >
+                    <Image
+                      src={card.image}
+                      alt={card.imageAlt}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      sizes="(max-width: 640px) 100vw, 40vw"
+                      priority
+                    />
+                    <span className="absolute inset-0 bg-gradient-to-t from-ink via-ink/55 to-ink/10" />
+                    <span className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+                      <span className="font-display text-3xl text-paper sm:text-4xl">
+                        {card.title}
+                      </span>
+                      <span className="mt-2 block text-sm text-paper-dim sm:text-base">
+                        {card.blurb}
+                      </span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === "date-room" && service && (
             <StepShell
-              eyebrow="Step 1"
+              eyebrow={stepEyebrow("date-room")}
               title="Date and room"
-              onBack={null}
+              onBack={() => backFrom("date-room")}
               onNext={() => {
                 if (!date) {
                   setError("Pick a date.");
@@ -616,6 +789,9 @@ export function BookingModal() {
               }}
               error={error}
             >
+              <p className="mb-4 font-caps text-[18px] tracking-[0.12em] text-cyan">
+                {isMusic ? "Music recording" : "Podcast"} path
+              </p>
               <DateCalendarPicker
                 value={date}
                 onChange={setDate}
@@ -624,69 +800,83 @@ export function BookingModal() {
                 autoOpen
               />
 
-              <div className="mt-6">
-                <span className="font-caps text-[18px] text-muted">
-                  How you&apos;re booking
-                </span>
-                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    className={`border px-4 py-3 text-left ${
-                      rateMode === "engineered"
-                        ? "border-cyan bg-graphite text-cyan"
-                        : "border-rule hover:border-paper-dim"
-                    }`}
-                    onClick={() => setRateMode("engineered")}
-                  >
-                    <span className="font-caps text-[18px] tracking-[0.1em]">
-                      Engineered
+              {isMusic && (
+                <>
+                  <div className="mt-6">
+                    <span className="font-caps text-[18px] text-muted">
+                      How you&apos;re booking
                     </span>
-                    <span className="mt-1 block text-sm text-muted">
-                      JaxCity engineer · room included · $
-                      {ENGINEERED.firstTimeHourly}/$
-                      {ENGINEERED.returningHourly}/hr
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`border px-4 py-3 text-left ${
-                      rateMode === "room-only"
-                        ? "border-magenta bg-graphite text-magenta"
-                        : "border-rule hover:border-paper-dim"
-                    }`}
-                    onClick={() => {
-                      setRateMode("room-only");
-                      setPackageId("session");
-                      setSelectedAddons([]);
-                    }}
-                  >
-                    <span className="font-caps text-[18px] tracking-[0.1em]">
-                      Room-only
-                    </span>
-                    <span className="mt-1 block text-sm text-muted">
-                      Bring your own engineer · priced by planet hourly
-                    </span>
-                  </button>
-                </div>
-              </div>
+                    <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        className={`border px-4 py-3 text-left ${
+                          rateMode === "engineered"
+                            ? "border-cyan bg-graphite text-cyan"
+                            : "border-rule hover:border-paper-dim"
+                        }`}
+                        onClick={() => setRateMode("engineered")}
+                      >
+                        <span className="font-caps text-[18px] tracking-[0.1em]">
+                          Engineered
+                        </span>
+                        <span className="mt-1 block text-sm text-muted">
+                          JaxCity engineer · room included · $
+                          {ENGINEERED.firstTimeHourly}/$
+                          {ENGINEERED.returningHourly}/hr
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`border px-4 py-3 text-left ${
+                          rateMode === "room-only"
+                            ? "border-magenta bg-graphite text-magenta"
+                            : "border-rule hover:border-paper-dim"
+                        }`}
+                        onClick={() => {
+                          setRateMode("room-only");
+                          setPackageId("session");
+                          setSelectedAddons([]);
+                        }}
+                      >
+                        <span className="font-caps text-[18px] tracking-[0.1em]">
+                          Room-only
+                        </span>
+                        <span className="mt-1 block text-sm text-muted">
+                          Bring your own engineer · priced by planet hourly
+                        </span>
+                      </button>
+                    </div>
+                  </div>
 
-              <label className="mt-6 block">
-                <span className="font-caps text-[18px] text-muted">
-                  Session length
-                </span>
-                <select
-                  className="select mt-2"
-                  value={durationHours}
-                  onChange={(e) => setDurationHours(Number(e.target.value))}
-                >
-                  {DURATION_OPTIONS.map((h) => (
-                    <option key={h} value={h}>
-                      {h} hours
-                      {h === ENGINEERED.minimumHours ? " (minimum)" : ""}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <label className="mt-6 block">
+                    <span className="font-caps text-[18px] text-muted">
+                      Session length
+                    </span>
+                    <select
+                      className="select mt-2"
+                      value={durationHours}
+                      onChange={(e) =>
+                        setDurationHours(Number(e.target.value))
+                      }
+                    >
+                      {DURATION_OPTIONS.map((h) => (
+                        <option key={h} value={h}>
+                          {h} hours
+                          {h === ENGINEERED.minimumHours ? " (minimum)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </>
+              )}
+
+              {isPodcast && (
+                <p className="mt-6 border border-rule bg-graphite p-4 text-sm text-paper-dim">
+                  Next you&apos;ll choose The Company Show (host + production)
+                  or DIY room rental. Room pick here locks the calendar room —
+                  no podcast pricing until the next step.
+                </p>
+              )}
 
               <div className="mt-6 grid gap-2">
                 {ROOMS.map((r) => (
@@ -700,35 +890,42 @@ export function BookingModal() {
                     }`}
                     style={
                       roomId === r.id
-                        ? { borderColor: r.color, boxShadow: `0 0 14px ${r.color}55` }
+                        ? {
+                            borderColor: r.color,
+                            boxShadow: `0 0 14px ${r.color}55`,
+                          }
                         : undefined
                     }
                     onClick={() => setRoomId(r.id)}
                   >
                     <div className="flex items-baseline justify-between gap-3">
                       <RoomName roomId={r.id} size="md" className="text-xl" />
-                      <span className="font-caps text-[18px] text-paper">
-                        {rateMode === "room-only"
-                          ? `$${r.hourly * durationHours}`
-                          : applyIntroPromo
-                            ? `$${INTRO_PROMO.price}`
-                            : `$${
-                                durationHours *
-                                (clientType === "first-time"
-                                  ? ENGINEERED.firstTimeHourly
-                                  : ENGINEERED.returningHourly)
-                              }`}
-                      </span>
+                      {isMusic && (
+                        <span className="font-caps text-[18px] text-paper">
+                          {rateMode === "room-only"
+                            ? `$${r.hourly * durationHours}`
+                            : applyIntroPromo
+                              ? `$${INTRO_PROMO.price}`
+                              : `$${
+                                  durationHours *
+                                  (clientType === "first-time"
+                                    ? ENGINEERED.firstTimeHourly
+                                    : ENGINEERED.returningHourly)
+                                }`}
+                        </span>
+                      )}
                     </div>
                     <span className="mt-1 block text-sm text-muted">
-                      {rateMode === "room-only"
-                        ? `Room-only $${r.hourly}/hr × ${durationHours}h`
-                        : `Engineered includes room · $${r.hourly}/hr if room-only`}
+                      {isMusic
+                        ? rateMode === "room-only"
+                          ? `Room-only $${r.hourly}/hr × ${durationHours}h`
+                          : `Engineered includes room · $${r.hourly}/hr if room-only`
+                        : `${r.fit}`}
                     </span>
                   </button>
                 ))}
               </div>
-              {planner && (
+              {planner && isMusic && (
                 <p className="mt-4 border border-rule bg-graphite p-3 text-sm text-paper-dim">
                   Planner attached: {planner.bookedHours}h studio · $
                   {planner.studioCost} engineered estimate
@@ -738,9 +935,169 @@ export function BookingModal() {
             </StepShell>
           )}
 
-          {step === "package" && !skipPackagesAndAddons && (
+          {step === "podcast-offer" && isPodcast && (
             <StepShell
-              eyebrow="Step 2"
+              eyebrow={stepEyebrow("podcast-offer")}
+              title="Podcast offer"
+              onBack={() => backFrom("podcast-offer")}
+              onNext={() => {
+                if (!podcastOffer) {
+                  setError("Pick a Company Show plan or DIY room rental.");
+                  return;
+                }
+                setError("");
+                nextFrom("podcast-offer");
+              }}
+              error={error}
+            >
+              <p className="text-paper-dim">
+                Soft-launch pricing from {COMPANY_SHOW.name}. Or rent the room
+                alone — without host or engineer.
+              </p>
+
+              <div className="mt-6 space-y-3">
+                <button
+                  type="button"
+                  className={`w-full border px-4 py-4 text-left ${
+                    podcastOffer === "pilot"
+                      ? "border-cyan bg-graphite"
+                      : "border-rule"
+                  }`}
+                  onClick={() => choosePodcastOffer("pilot")}
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="font-display text-2xl">
+                      {COMPANY_SHOW.pilot.name}
+                    </span>
+                    <span className="font-caps text-[18px] text-paper">
+                      ${COMPANY_SHOW.pilot.price}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-paper-dim">
+                    {COMPANY_SHOW.pilot.note}
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  className={`w-full border px-4 py-4 text-left ${
+                    podcastOffer === "founding"
+                      ? "border-cyan bg-graphite"
+                      : "border-rule"
+                  }`}
+                  onClick={() => choosePodcastOffer("founding")}
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="font-display text-2xl">
+                      {COMPANY_SHOW.founding.name}
+                    </span>
+                    <span className="font-caps text-[18px] text-paper">
+                      ${COMPANY_SHOW.founding.monthlyPrice}/mo
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-paper-dim">
+                    {COMPANY_SHOW.founding.months} months ·{" "}
+                    {COMPANY_SHOW.founding.spots} founding spots · normally $
+                    {COMPANY_SHOW.founding.normalMonthlyPrice}/mo
+                  </p>
+                </button>
+
+                {COMPANY_SHOW_PLANS.map((plan) => (
+                  <button
+                    key={plan.id}
+                    type="button"
+                    className={`w-full border px-4 py-4 text-left ${
+                      podcastOffer === plan.id
+                        ? "border-cyan bg-graphite"
+                        : "border-rule"
+                    }`}
+                    onClick={() => choosePodcastOffer(plan.id)}
+                  >
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="font-display text-2xl">{plan.name}</span>
+                      <span className="font-caps text-[18px] text-paper">
+                        ${plan.monthlyPrice}/mo
+                      </span>
+                    </div>
+                    {plan.featured && (
+                      <span className="mt-2 inline-block font-caps text-[18px] text-accent">
+                        Recommended
+                      </span>
+                    )}
+                    <p className="mt-2 text-sm text-paper-dim">{plan.summary}</p>
+                    <p className="mt-2 text-sm text-muted">
+                      {plan.episodes} episode{plan.episodes === 1 ? "" : "s"} ·{" "}
+                      {plan.clips} clips · includes host, studio, edit & publish
+                    </p>
+                  </button>
+                ))}
+              </div>
+
+              <p className="mt-4 text-sm text-muted">
+                Every Company Show plan includes:{" "}
+                {COMPANY_SHOW_CORE.slice(0, 4).join(" · ")}…
+              </p>
+
+              <div className="mt-8 border-t border-rule pt-6">
+                <p className="font-caps text-[18px] text-magenta">
+                  DIY room rental
+                </p>
+                <p className="mt-3 border border-magenta/50 bg-graphite p-4 text-sm text-paper-dim">
+                  {PODCAST_DIY_DISCLAIMER}
+                </p>
+                <button
+                  type="button"
+                  className={`mt-3 w-full border px-4 py-4 text-left ${
+                    podcastOffer === "diy"
+                      ? "border-magenta bg-graphite"
+                      : "border-rule"
+                  }`}
+                  onClick={() => choosePodcastOffer("diy")}
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="font-display text-2xl">
+                      Room + equipment only
+                    </span>
+                    <span className="font-caps text-[18px] text-paper">
+                      ${selectedRoom.hourly}/hr
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-paper-dim">
+                    {selectedRoom.name}: ${selectedRoom.hourly}/hr ×{" "}
+                    {durationHours}h = $
+                    {selectedRoom.hourly * durationHours} (adjust hours on the
+                    next step). No host. No engineer. No editing.
+                  </p>
+                </button>
+                {podcastOffer === "diy" && (
+                  <div className="mt-3 grid gap-2">
+                    {ROOMS.map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        className={`border px-3 py-2 text-left text-sm ${
+                          roomId === r.id
+                            ? "border-magenta bg-graphite"
+                            : "border-rule"
+                        }`}
+                        onClick={() => setRoomId(r.id)}
+                      >
+                        <RoomName roomId={r.id} size="sm" className="text-base" />
+                        <span className="mt-0.5 block text-muted">
+                          ${r.hourly}/hr · ${r.hourly * durationHours} for{" "}
+                          {durationHours}h · room & gear only
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </StepShell>
+          )}
+
+          {step === "package" && !skipPackagesAndAddons && isMusic && (
+            <StepShell
+              eyebrow={stepEyebrow("package")}
               title="Package"
               onBack={() => backFrom("package")}
               onNext={() => nextFrom("package")}
@@ -781,7 +1138,7 @@ export function BookingModal() {
 
           {step === "times" && (
             <StepShell
-              eyebrow={skipPackagesAndAddons ? "Step 2" : "Step 3"}
+              eyebrow={stepEyebrow("times")}
               title="Available times"
               onBack={() => backFrom("times")}
               onNext={() => {
@@ -802,14 +1159,30 @@ export function BookingModal() {
                   className="select mt-2"
                   value={durationHours}
                   onChange={(e) => setDurationHours(Number(e.target.value))}
+                  disabled={podcastIsCompanyShow}
                 >
                   {DURATION_OPTIONS.map((h) => (
                     <option key={h} value={h}>
-                      {h} hours{h === ENGINEERED.minimumHours ? " (minimum)" : ""}
+                      {h} hours
+                      {h === ENGINEERED.minimumHours ? " (minimum)" : ""}
+                      {podcastIsCompanyShow && h === COMPANY_SHOW_SESSION_HOURS
+                        ? " · Company Show block"
+                        : ""}
                     </option>
                   ))}
                 </select>
               </label>
+              {podcastIsCompanyShow && (
+                <p className="mt-2 text-sm text-muted">
+                  Company Show sessions are booked as a{" "}
+                  {COMPANY_SHOW_SESSION_HOURS}-hour studio block.
+                </p>
+              )}
+              {podcastIsDiy && (
+                <p className="mt-2 border border-magenta/40 bg-graphite p-3 text-sm text-paper-dim">
+                  {PODCAST_DIY_DISCLAIMER}
+                </p>
+              )}
 
               <div className="mt-6">
                 <span className="font-caps text-[18px] text-muted">Room</span>
@@ -840,9 +1213,13 @@ export function BookingModal() {
                     >
                       <RoomName roomId={r.id} size="sm" className="text-base" />
                       <span className="mt-0.5 block text-xs text-muted">
-                        {rateMode === "room-only"
-                          ? `$${r.hourly}/hr · $${r.hourly * durationHours} total`
-                          : "Engineered includes room"}
+                        {isMusic
+                          ? rateMode === "room-only"
+                            ? `$${r.hourly}/hr · $${r.hourly * durationHours} total`
+                            : "Engineered includes room"
+                          : podcastIsDiy
+                            ? `$${r.hourly}/hr DIY room only`
+                            : "Company Show includes studio"}
                       </span>
                     </button>
                   ))}
@@ -906,36 +1283,50 @@ export function BookingModal() {
                 </>
               )}
 
-              {start && end && (
+              {start && end && showPricing && (
                 <p className="mt-4 text-paper-dim">
                   Selected window: {formatTimeRange12(start, end)} ({hours}h).
-                  Live total uses {rateLabel}
-                  {packageId === "session" || rateMode === "room-only"
-                    ? `: $${studioSubtotal}`
-                    : ""}.
+                  Live total uses {rateLabel}: ${studioSubtotal}.
                 </p>
               )}
-              {rateMode === "room-only" && start && (
+              {isMusic && rateMode === "room-only" && start && (
                 <p className="mt-2 text-sm text-muted">
                   Math: {hours} × ${selectedRoom.hourly} ({selectedRoom.name}{" "}
                   room-only) = ${studioSubtotal}. Bring your own engineer.
                 </p>
               )}
-              {rateMode === "engineered" && packageId === "session" && start && (
+              {isMusic &&
+                rateMode === "engineered" &&
+                packageId === "session" &&
+                start && (
+                  <p className="mt-2 text-sm text-muted">
+                    {applyIntroPromo
+                      ? `Intro math: ${INTRO_PROMO.hours} hours for $${INTRO_PROMO.price} (first session only). Room included.`
+                      : `Math: ${hours} × $${
+                          clientType === "first-time"
+                            ? ENGINEERED.firstTimeHourly
+                            : ENGINEERED.returningHourly
+                        } = $${studioSubtotal}. Room included.`}
+                  </p>
+                )}
+              {isMusic &&
+                rateMode === "engineered" &&
+                packageId !== "session" && (
+                  <p className="mt-2 text-sm text-accent">
+                    Package subtotal ${studioSubtotal} includes sample
+                    components — see Pricing for the published vs sample split.
+                  </p>
+                )}
+              {podcastIsDiy && start && (
                 <p className="mt-2 text-sm text-muted">
-                  {applyIntroPromo
-                    ? `Intro math: ${INTRO_PROMO.hours} hours for $${INTRO_PROMO.price} (first session only). Room included.`
-                    : `Math: ${hours} × $${
-                        clientType === "first-time"
-                          ? ENGINEERED.firstTimeHourly
-                          : ENGINEERED.returningHourly
-                      } = $${studioSubtotal}. Room included.`}
+                  DIY math: {hours} × ${selectedRoom.hourly} = ${studioSubtotal}
+                  . Room and equipment only.
                 </p>
               )}
-              {rateMode === "engineered" && packageId !== "session" && (
-                <p className="mt-2 text-sm text-accent">
-                  Package subtotal ${studioSubtotal} includes sample components —
-                  see Pricing for the published vs sample split.
+              {podcastIsCompanyShow && podcastOffer && start && (
+                <p className="mt-2 text-sm text-muted">
+                  {podcastOfferShortLabel(podcastOffer)} deposit is 50% of $
+                  {studioSubtotal} due now.
                 </p>
               )}
             </StepShell>
@@ -943,7 +1334,7 @@ export function BookingModal() {
 
           {step === "contact" && (
             <StepShell
-              eyebrow={skipPackagesAndAddons ? "Step 3" : "Step 4"}
+              eyebrow={stepEyebrow("contact")}
               title="You"
               onBack={() => backFrom("contact")}
               onNext={async () => {
@@ -951,7 +1342,7 @@ export function BookingModal() {
                   setError("Name, email, and phone — all three.");
                   return;
                 }
-                if (rateMode === "engineered") {
+                if (isMusic && rateMode === "engineered") {
                   const check = await refreshEligibility(email, phone);
                   if (
                     check &&
@@ -999,7 +1390,7 @@ export function BookingModal() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
-                {rateMode === "engineered" && (
+                {isMusic && rateMode === "engineered" && (
                   <div className="grid grid-cols-2 gap-2 pt-2">
                     <button
                       type="button"
@@ -1032,25 +1423,37 @@ export function BookingModal() {
                     </button>
                   </div>
                 )}
-                {rateMode === "room-only" && (
+                {(podcastIsDiy ||
+                  (isMusic && rateMode === "room-only")) && (
                   <p className="pt-2 text-sm text-muted">
                     Room-only total: ${studioSubtotal} for {hours}h in{" "}
                     {selectedRoom.name} (${selectedRoom.hourly}/hr). Deposit $
                     {deposit}.
                   </p>
                 )}
-                {eligibilityLoading && rateMode === "engineered" && (
-                  <p className="text-sm text-muted">Checking first-session eligibility…</p>
-                )}
-                {rateMode === "engineered" &&
-                  eligibility &&
-                  !eligibility.canUseFirstTime && (
-                  <p className="text-sm text-accent">
-                    {eligibility.reason ||
-                      "This contact already booked — returning rates apply."}
+                {podcastIsCompanyShow && podcastOffer && (
+                  <p className="pt-2 text-sm text-muted">
+                    {podcastOfferLabel(podcastOffer)} · deposit ${deposit} now.
                   </p>
                 )}
-                {rateMode === "engineered" &&
+                {eligibilityLoading &&
+                  isMusic &&
+                  rateMode === "engineered" && (
+                    <p className="text-sm text-muted">
+                      Checking first-session eligibility…
+                    </p>
+                  )}
+                {isMusic &&
+                  rateMode === "engineered" &&
+                  eligibility &&
+                  !eligibility.canUseFirstTime && (
+                    <p className="text-sm text-accent">
+                      {eligibility.reason ||
+                        "This contact already booked — returning rates apply."}
+                    </p>
+                  )}
+                {isMusic &&
+                  rateMode === "engineered" &&
                   eligibility?.canUseIntroPromo &&
                   packageId === "session" &&
                   hours === INTRO_PROMO.hours &&
@@ -1276,15 +1679,32 @@ export function BookingModal() {
         {/* Slim summary bar */}
         <div className="absolute bottom-0 left-0 right-0 border-t border-rule bg-ink/95 px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-2 font-caps text-[18px] tracking-[0.14em] text-muted">
-            <span className="inline-flex items-center gap-2 normal-case tracking-normal">
-              <RoomName roomId={roomId} size="sm" className="text-sm" />
-              <span className="font-caps tracking-[0.14em]">
-                · {hours}h · {rateLabel}
-              </span>
-            </span>
-            <span className="text-paper">
-              ${total} · deposit ${deposit}
-            </span>
+            {!service ? (
+              <span className="text-muted">Music or podcast — pick a path</span>
+            ) : (
+              <>
+                <span className="inline-flex flex-wrap items-center gap-2 normal-case tracking-normal">
+                  <span className="font-caps tracking-[0.14em] text-cyan">
+                    {isMusic ? "Music" : "Podcast"}
+                  </span>
+                  {step !== "service" && (
+                    <>
+                      <RoomName roomId={roomId} size="sm" className="text-sm" />
+                      <span className="font-caps tracking-[0.14em]">
+                        · {hours}h · {rateLabel}
+                      </span>
+                    </>
+                  )}
+                </span>
+                {showPricing ? (
+                  <span className="text-paper">
+                    ${total} · deposit ${deposit}
+                  </span>
+                ) : (
+                  <span className="text-muted">Pricing after you choose</span>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
