@@ -224,6 +224,35 @@ export function roomOnlyTotal(roomId: RoomId, hours: number): number {
   return Math.max(hours, 1) * room.hourly;
 }
 
+/** Engineered (room included) vs bring-your-own-engineer room-only. */
+export type RateMode = "engineered" | "room-only";
+
+/**
+ * Studio subtotal for checkout / booking summary.
+ * Room-only uses the selected planet hourly; engineered ignores room price
+ * (room is included) and may apply the one-time intro promo.
+ */
+export function bookingStudioTotal(opts: {
+  rateMode: RateMode;
+  roomId: RoomId;
+  hours: number;
+  clientType: "first-time" | "returning";
+  applyIntroPromo?: boolean;
+  packageId?: string;
+}): number {
+  const pkg = opts.packageId || "session";
+  if (pkg === "series") return PACKAGES.series.sampleTotal;
+  if (pkg === "partner") return PACKAGES.partner.sampleMonthlyTotal;
+  if (opts.rateMode === "room-only") {
+    return roomOnlyTotal(opts.roomId, opts.hours);
+  }
+  return sessionStudioTotal({
+    hours: opts.hours,
+    clientType: opts.clientType,
+    applyIntroPromo: opts.applyIntroPromo,
+  });
+}
+
 export function dayRateStarting(): number {
   return DAY_RATE.startingAt;
 }
