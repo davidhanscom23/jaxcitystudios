@@ -760,11 +760,15 @@ export function BookingModal() {
                       priority
                     />
                     <span className="absolute inset-0 bg-gradient-to-t from-ink via-ink/55 to-ink/10" />
-                    <span className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
-                      <span className="font-display text-3xl text-paper sm:text-4xl">
-                        {card.title}
+                    <span className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                      <span className="font-display block text-[1.75rem] leading-[0.95] tracking-tight text-paper sm:text-[2rem] lg:text-[2.35rem]">
+                        {card.titleLines.map((line) => (
+                          <span key={line} className="block">
+                            {line}
+                          </span>
+                        ))}
                       </span>
-                      <span className="mt-2 block text-sm text-paper-dim sm:text-base">
+                      <span className="mt-2 block text-sm leading-snug text-paper-dim sm:text-base">
                         {card.blurb}
                       </span>
                     </span>
