@@ -748,7 +748,7 @@ export function BookingModal() {
                   <button
                     key={card.id}
                     type="button"
-                    className="group relative aspect-[4/5] overflow-hidden border border-rule text-left transition-[border-color,box-shadow] hover:border-paper focus-visible:border-cyan sm:aspect-[3/4]"
+                    className="group relative aspect-[4/5] w-full overflow-hidden border border-rule text-left transition-[border-color,box-shadow] hover:border-paper focus-visible:border-cyan [container-type:inline-size] sm:aspect-[3/4]"
                     onClick={() => chooseService(card.id)}
                   >
                     <Image
@@ -760,11 +760,15 @@ export function BookingModal() {
                       priority
                     />
                     <span className="absolute inset-0 bg-gradient-to-t from-ink via-ink/55 to-ink/10" />
-                    <span className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
-                      <span className="font-display text-3xl text-paper sm:text-4xl">
-                        {card.title}
+                    <span className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                      <span className="font-display block max-w-full text-[clamp(1.05rem,9.5cqi,1.45rem)] leading-[0.92] tracking-[-0.03em] text-paper">
+                        {card.titleLines.map((line) => (
+                          <span key={line} className="block whitespace-nowrap">
+                            {line}
+                          </span>
+                        ))}
                       </span>
-                      <span className="mt-2 block text-sm text-paper-dim sm:text-base">
+                      <span className="mt-2 block text-sm leading-snug text-paper-dim">
                         {card.blurb}
                       </span>
                     </span>

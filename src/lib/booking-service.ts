@@ -18,6 +18,8 @@ export const BOOKING_SERVICE_CARDS = {
   music: {
     id: "music" as const,
     title: "Music recording",
+    /** Forced line breaks so wide display type never clips in the card. */
+    titleLines: ["Music", "recording"] as const,
     blurb: "Tracking, mixing, and engineered sessions with a JaxCity engineer.",
     image: "/images/studio-session-purple.jpg",
     imageAlt:
@@ -26,6 +28,7 @@ export const BOOKING_SERVICE_CARDS = {
   podcast: {
     id: "podcast" as const,
     title: "Podcast",
+    titleLines: ["Podcast"] as const,
     blurb:
       "The Company Show done-for-you plans — or DIY room and equipment only.",
     image: "/images/hero-podcast-table.png",
