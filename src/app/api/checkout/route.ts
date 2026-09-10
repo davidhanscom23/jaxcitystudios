@@ -3,11 +3,11 @@ import {
   ADDONS,
   DEPOSIT,
   INTRO_PROMO,
-  PACKAGES,
   STUDIO,
   balanceOnArrival,
+  bookingStudioTotal,
   depositAmount,
-  sessionStudioTotal,
+  type RateMode,
   type RoomId,
 } from "@/lib/rates";
 import {
@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
     date,
     roomId,
     packageId,
+    rateMode: rawRateMode,
     start,
     end,
     hours,
@@ -55,11 +56,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const rateMode: RateMode =
+    rawRateMode === "room-only" ? "room-only" : "engineered";
+
   const eligibility = getClientEligibility(email, phone);
   const clientType: "first-time" | "returning" =
     rawClientType === "returning" ? "returning" : "first-time";
 
-  if (clientType === "first-time" && !eligibility.canUseFirstTime) {
+  if (
+    rateMode === "engineered" &&
+    clientType === "first-time" &&
+    !eligibility.canUseFirstTime
+  ) {
     return NextResponse.json(
       {
         error:
@@ -72,9 +80,10 @@ export async function POST(req: NextRequest) {
   }
 
   const wantsIntro =
-    rawApplyIntro === true ||
-    rawPromoId === INTRO_PROMO.id ||
-    String(rawPromoId || "") === INTRO_PROMO.id;
+    rateMode === "engineered" &&
+    (rawApplyIntro === true ||
+      rawPromoId === INTRO_PROMO.id ||
+      String(rawPromoId || "") === INTRO_PROMO.id);
 
   const hoursN = Number(hours);
   let applyIntroPromo = false;
@@ -117,22 +126,22 @@ export async function POST(req: NextRequest) {
   }
 
   // Recalculate studio + addons so clients cannot underpay via spoofed totals.
-  const pkg = packageId || "session";
-  let studioSubtotal: number;
-  if (pkg === "series") studioSubtotal = PACKAGES.series.sampleTotal;
-  else if (pkg === "partner")
-    studioSubtotal = PACKAGES.partner.sampleMonthlyTotal;
-  else {
-    studioSubtotal = sessionStudioTotal({
-      hours: hoursN,
-      clientType,
-      applyIntroPromo,
-    });
-  }
+  const pkg = rateMode === "room-only" ? "session" : packageId || "session";
+  const studioSubtotal = bookingStudioTotal({
+    rateMode,
+    roomId: roomId as RoomId,
+    hours: hoursN,
+    clientType,
+    applyIntroPromo,
+    packageId: pkg,
+  });
 
-  const addonIds: string[] = Array.isArray(selectedAddons)
-    ? selectedAddons
-    : [];
+  const addonIds: string[] =
+    rateMode === "room-only"
+      ? []
+      : Array.isArray(selectedAddons)
+        ? selectedAddons
+        : [];
   const addonTotal = addonIds.reduce((sum, id) => {
     const a = ADDONS.find((x) => x.id === id);
     return sum + (a?.packagePrice ?? 0);
@@ -156,6 +165,7 @@ export async function POST(req: NextRequest) {
           deposit: expectedDeposit,
           balance: expectedBalance,
           promoId,
+          rateMode,
         },
       },
       { status: 400 },
@@ -188,16 +198,24 @@ export async function POST(req: NextRequest) {
     clientName: name,
     clientEmail: email,
     clientPhone: phone,
-    clientType,
+    clientType: rateMode === "room-only" ? undefined : clientType,
     packageId: pkg,
     promoId,
     hours: hoursN,
     totalCents: Math.round(expectedTotal * 100),
     depositCents: Math.round(expectedDeposit * 100),
     paymentMethod: method,
-    notes: planner
-      ? `Planner attached (${String(planner.title || "show")})`
-      : undefined,
+    notes:
+      [
+        rateMode === "room-only"
+          ? "Rate mode: room-only (BYO engineer)"
+          : null,
+        planner
+          ? `Planner attached (${String(planner.title || "show")})`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · ") || undefined,
   });
 
   if (!held.ok) {
@@ -210,6 +228,7 @@ export async function POST(req: NextRequest) {
       mode: "manual",
       bookingId: held.bookingId,
       promoId,
+      rateMode,
       message:
         "Slot held. Send the deposit by Zelle, then the studio will confirm.",
     });
@@ -230,7 +249,7 @@ export async function POST(req: NextRequest) {
     const order = await createPayPalOrder({
       amount: expectedDeposit,
       bookingId: held.bookingId,
-      description: `${STUDIO.name} 50% deposit · ${date} · ${roomId} · ${start}–${end}. ${DEPOSIT.policy} Balance $${expectedBalance} due on arrival.`,
+      description: `${STUDIO.name} 50% deposit · ${date} · ${roomId} · ${start}–${end} · ${rateMode}. ${DEPOSIT.policy} Balance $${expectedBalance} due on arrival.`,
     });
 
     attachPaymentRef(held.bookingId, order.id, method);
@@ -240,6 +259,7 @@ export async function POST(req: NextRequest) {
       orderId: order.id,
       bookingId: held.bookingId,
       promoId,
+      rateMode,
       addons: addonIds,
     });
   } catch (err) {

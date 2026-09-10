@@ -12,6 +12,7 @@ import {
   depositAmount,
   balanceOnArrival,
   recommendRoom,
+  bookingStudioTotal,
 } from "../src/lib/rates";
 import { answerPricingQuestion } from "../src/lib/chat";
 import { computePlanner, DEFAULT_SHOW } from "../src/lib/planner";
@@ -37,6 +38,46 @@ assert(PACKAGES.series.studioCostPublished === 400, "series studio");
 assert(PACKAGES.partner.studioCostPublished === 400, "partner studio");
 assert(recommendRoom(4, 4).id === "mars", "4cam -> mars");
 assert(recommendRoom(2, 1).id === "mercury", "duo/cam1 mercury or venus");
+
+assert(
+  bookingStudioTotal({
+    rateMode: "room-only",
+    roomId: "mercury",
+    hours: 2,
+    clientType: "first-time",
+  }) === 50,
+  "mercury 2h room-only",
+);
+assert(
+  bookingStudioTotal({
+    rateMode: "room-only",
+    roomId: "venus",
+    hours: 3,
+    clientType: "first-time",
+  }) === 105,
+  "venus 3h room-only",
+);
+assert(
+  bookingStudioTotal({
+    rateMode: "engineered",
+    roomId: "mercury",
+    hours: 2,
+    clientType: "first-time",
+    applyIntroPromo: true,
+  }) === INTRO_PROMO.price,
+  "engineered intro ignores room",
+);
+assert(
+  depositAmount(
+    bookingStudioTotal({
+      rateMode: "room-only",
+      roomId: "mercury",
+      hours: 2,
+      clientType: "first-time",
+    }),
+  ) === 25,
+  "mercury room-only 50% deposit",
+);
 
 const marsEng = answerPricingQuestion(
   "how much for a four hour session in Mars with an engineer",

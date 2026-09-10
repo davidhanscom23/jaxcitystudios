@@ -23,8 +23,9 @@ import {
   ROOMS,
   STUDIO,
   balanceOnArrival,
+  bookingStudioTotal,
   depositAmount,
-  sessionStudioTotal,
+  type RateMode,
   type RoomId,
 } from "@/lib/rates";
 import { PUBLIC_PAYMENTS } from "@/lib/payments-public";
@@ -75,6 +76,7 @@ export function BookingModal() {
   const [step, setStep] = useState<Step>("date-room");
   const [date, setDate] = useState("");
   const [roomId, setRoomId] = useState<RoomId>("venus");
+  const [rateMode, setRateMode] = useState<RateMode>("engineered");
   const [packageId, setPackageId] = useState("session");
   const [durationHours, setDurationHours] = useState<number>(
     ENGINEERED.minimumHours,
@@ -133,6 +135,7 @@ export function BookingModal() {
     setPayMethod("paypal");
     setEligibility(null);
     setEligibilityLoading(false);
+    setRateMode("engineered");
     if (initialRoomId) setRoomId(initialRoomId);
     if (planner?.roomId) setRoomId(planner.roomId);
     if (isApp) {
@@ -149,6 +152,10 @@ export function BookingModal() {
       setDurationHours(ENGINEERED.minimumHours);
     }
   }, [open, initialRoomId, initialPackageId, planner, isApp]);
+
+  /** Room-only skips sample packages/add-ons — same path as the phone app. */
+  const skipPackagesAndAddons = isApp || rateMode === "room-only";
+  const flowSteps = skipPackagesAndAddons ? STEPS_APP : STEPS_MODAL;
 
   useEffect(() => {
     if (!open) return;
@@ -232,41 +239,51 @@ export function BookingModal() {
 
   const end = start ? addHoursToTime(start, durationHours) : "";
   const hours = durationHours;
+  const selectedRoom = ROOMS.find((r) => r.id === roomId) ?? ROOMS[0];
 
   const applyIntroPromo =
+    rateMode === "engineered" &&
     packageId === "session" &&
     clientType === "first-time" &&
     hours === INTRO_PROMO.hours &&
     (eligibility?.canUseIntroPromo ?? true);
 
-  const studioSubtotal = useMemo(() => {
-    if (packageId === "series") return PACKAGES.series.sampleTotal;
-    if (packageId === "partner") return PACKAGES.partner.sampleMonthlyTotal;
-    return sessionStudioTotal({
-      hours,
-      clientType,
-      applyIntroPromo,
-    });
-  }, [packageId, hours, clientType, applyIntroPromo]);
+  const studioSubtotal = useMemo(
+    () =>
+      bookingStudioTotal({
+        rateMode,
+        roomId,
+        hours,
+        clientType,
+        applyIntroPromo,
+        packageId,
+      }),
+    [rateMode, roomId, hours, clientType, applyIntroPromo, packageId],
+  );
 
-  const addonTotal = selectedAddons.reduce((sum, id) => {
-    const a = ADDONS.find((x) => x.id === id);
-    return sum + (a?.packagePrice ?? 0);
-  }, 0);
+  const addonTotal =
+    rateMode === "room-only"
+      ? 0
+      : selectedAddons.reduce((sum, id) => {
+          const a = ADDONS.find((x) => x.id === id);
+          return sum + (a?.packagePrice ?? 0);
+        }, 0);
 
   const total = studioSubtotal + addonTotal;
   const deposit = depositAmount(total);
   const balance = balanceOnArrival(total);
   const rateLabel =
-    packageId === "session"
-      ? applyIntroPromo
-        ? `${INTRO_PROMO.label} intro (first session)`
-        : clientType === "first-time"
-          ? `$${ENGINEERED.firstTimeHourly}/hr first-time engineered`
-          : `$${ENGINEERED.returningHourly}/hr returning engineered`
-      : packageId === "series"
-        ? "The Series (sample package total)"
-        : "The Studio Partner (sample monthly total)";
+    rateMode === "room-only"
+      ? `$${selectedRoom.hourly}/hr room-only · ${selectedRoom.name}`
+      : packageId === "session"
+        ? applyIntroPromo
+          ? `${INTRO_PROMO.label} intro (first session)`
+          : clientType === "first-time"
+            ? `$${ENGINEERED.firstTimeHourly}/hr first-time engineered`
+            : `$${ENGINEERED.returningHourly}/hr returning engineered`
+        : packageId === "series"
+          ? "The Series (sample package total)"
+          : "The Studio Partner (sample monthly total)";
 
   function nextFrom(current: Step) {
     if (current === "addon") {
@@ -277,13 +294,12 @@ export function BookingModal() {
       void openAgreementStep();
       return;
     }
-    if (isApp && current === "contact") {
+    if (skipPackagesAndAddons && current === "contact") {
       void openAgreementStep();
       return;
     }
-    const steps = isApp ? STEPS_APP : STEPS_MODAL;
-    const idx = steps.indexOf(current);
-    if (idx >= 0 && idx < steps.length - 1) setStep(steps[idx + 1]);
+    const idx = flowSteps.indexOf(current);
+    if (idx >= 0 && idx < flowSteps.length - 1) setStep(flowSteps[idx + 1]);
   }
 
   function backFrom(current: Step) {
@@ -296,7 +312,7 @@ export function BookingModal() {
       return;
     }
     if (current === "agreement") {
-      if (isApp) {
+      if (skipPackagesAndAddons) {
         setStep("contact");
         return;
       }
@@ -308,9 +324,8 @@ export function BookingModal() {
       setStep("contact");
       return;
     }
-    const steps = isApp ? STEPS_APP : STEPS_MODAL;
-    const idx = steps.indexOf(current);
-    if (idx > 0) setStep(steps[idx - 1]);
+    const idx = flowSteps.indexOf(current);
+    if (idx > 0) setStep(flowSteps[idx - 1]);
   }
 
   async function linkAgreementToBooking(nextBookingId: string) {
@@ -337,6 +352,7 @@ export function BookingModal() {
         date,
         roomId,
         packageId,
+        rateMode,
         start,
         end,
         hours,
@@ -344,7 +360,7 @@ export function BookingModal() {
         email,
         phone,
         clientType,
-        selectedAddons,
+        selectedAddons: rateMode === "room-only" ? [] : selectedAddons,
         total,
         deposit,
         balance,
@@ -370,6 +386,7 @@ export function BookingModal() {
     date,
     roomId,
     packageId,
+    rateMode,
     start,
     end,
     hours,
@@ -497,6 +514,7 @@ export function BookingModal() {
           date,
           roomId,
           packageId,
+          rateMode,
           start,
           end,
           hours,
@@ -504,7 +522,7 @@ export function BookingModal() {
           email,
           phone,
           clientType,
-          selectedAddons,
+          selectedAddons: rateMode === "room-only" ? [] : selectedAddons,
           total,
           deposit,
           balance,
@@ -605,6 +623,71 @@ export function BookingModal() {
                 durationHours={durationHours}
                 autoOpen
               />
+
+              <div className="mt-6">
+                <span className="font-caps text-[18px] text-muted">
+                  How you&apos;re booking
+                </span>
+                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    className={`border px-4 py-3 text-left ${
+                      rateMode === "engineered"
+                        ? "border-cyan bg-graphite text-cyan"
+                        : "border-rule hover:border-paper-dim"
+                    }`}
+                    onClick={() => setRateMode("engineered")}
+                  >
+                    <span className="font-caps text-[18px] tracking-[0.1em]">
+                      Engineered
+                    </span>
+                    <span className="mt-1 block text-sm text-muted">
+                      JaxCity engineer · room included · $
+                      {ENGINEERED.firstTimeHourly}/$
+                      {ENGINEERED.returningHourly}/hr
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`border px-4 py-3 text-left ${
+                      rateMode === "room-only"
+                        ? "border-magenta bg-graphite text-magenta"
+                        : "border-rule hover:border-paper-dim"
+                    }`}
+                    onClick={() => {
+                      setRateMode("room-only");
+                      setPackageId("session");
+                      setSelectedAddons([]);
+                    }}
+                  >
+                    <span className="font-caps text-[18px] tracking-[0.1em]">
+                      Room-only
+                    </span>
+                    <span className="mt-1 block text-sm text-muted">
+                      Bring your own engineer · priced by planet hourly
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <label className="mt-6 block">
+                <span className="font-caps text-[18px] text-muted">
+                  Session length
+                </span>
+                <select
+                  className="select mt-2"
+                  value={durationHours}
+                  onChange={(e) => setDurationHours(Number(e.target.value))}
+                >
+                  {DURATION_OPTIONS.map((h) => (
+                    <option key={h} value={h}>
+                      {h} hours
+                      {h === ENGINEERED.minimumHours ? " (minimum)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
               <div className="mt-6 grid gap-2">
                 {ROOMS.map((r) => (
                   <button
@@ -622,9 +705,25 @@ export function BookingModal() {
                     }
                     onClick={() => setRoomId(r.id)}
                   >
-                    <RoomName roomId={r.id} size="md" className="text-xl" />
+                    <div className="flex items-baseline justify-between gap-3">
+                      <RoomName roomId={r.id} size="md" className="text-xl" />
+                      <span className="font-caps text-[18px] text-paper">
+                        {rateMode === "room-only"
+                          ? `$${r.hourly * durationHours}`
+                          : applyIntroPromo
+                            ? `$${INTRO_PROMO.price}`
+                            : `$${
+                                durationHours *
+                                (clientType === "first-time"
+                                  ? ENGINEERED.firstTimeHourly
+                                  : ENGINEERED.returningHourly)
+                              }`}
+                      </span>
+                    </div>
                     <span className="mt-1 block text-sm text-muted">
-                      Room-only ${r.hourly}/hr · engineered includes room
+                      {rateMode === "room-only"
+                        ? `Room-only $${r.hourly}/hr × ${durationHours}h`
+                        : `Engineered includes room · $${r.hourly}/hr if room-only`}
                     </span>
                   </button>
                 ))}
@@ -639,7 +738,7 @@ export function BookingModal() {
             </StepShell>
           )}
 
-          {step === "package" && !isApp && (
+          {step === "package" && !skipPackagesAndAddons && (
             <StepShell
               eyebrow="Step 2"
               title="Package"
@@ -661,7 +760,10 @@ export function BookingModal() {
                       ? "border-paper bg-graphite"
                       : "border-rule"
                   }`}
-                  onClick={() => setPackageId(p.id)}
+                  onClick={() => {
+                    setPackageId(p.id);
+                    setRateMode("engineered");
+                  }}
                 >
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="font-display text-2xl">{p.name}</span>
@@ -679,7 +781,7 @@ export function BookingModal() {
 
           {step === "times" && (
             <StepShell
-              eyebrow={isApp ? "Step 2" : "Step 3"}
+              eyebrow={skipPackagesAndAddons ? "Step 2" : "Step 3"}
               title="Available times"
               onBack={() => backFrom("times")}
               onNext={() => {
@@ -738,7 +840,9 @@ export function BookingModal() {
                     >
                       <RoomName roomId={r.id} size="sm" className="text-base" />
                       <span className="mt-0.5 block text-xs text-muted">
-                        ${r.hourly}/hr room-only
+                        {rateMode === "room-only"
+                          ? `$${r.hourly}/hr · $${r.hourly * durationHours} total`
+                          : "Engineered includes room"}
                       </span>
                     </button>
                   ))}
@@ -806,10 +910,18 @@ export function BookingModal() {
                 <p className="mt-4 text-paper-dim">
                   Selected window: {formatTimeRange12(start, end)} ({hours}h).
                   Live total uses {rateLabel}
-                  {packageId === "session" ? `: $${studioSubtotal}` : ""}.
+                  {packageId === "session" || rateMode === "room-only"
+                    ? `: $${studioSubtotal}`
+                    : ""}.
                 </p>
               )}
-              {packageId === "session" && start && (
+              {rateMode === "room-only" && start && (
+                <p className="mt-2 text-sm text-muted">
+                  Math: {hours} × ${selectedRoom.hourly} ({selectedRoom.name}{" "}
+                  room-only) = ${studioSubtotal}. Bring your own engineer.
+                </p>
+              )}
+              {rateMode === "engineered" && packageId === "session" && start && (
                 <p className="mt-2 text-sm text-muted">
                   {applyIntroPromo
                     ? `Intro math: ${INTRO_PROMO.hours} hours for $${INTRO_PROMO.price} (first session only). Room included.`
@@ -820,7 +932,7 @@ export function BookingModal() {
                       } = $${studioSubtotal}. Room included.`}
                 </p>
               )}
-              {packageId !== "session" && (
+              {rateMode === "engineered" && packageId !== "session" && (
                 <p className="mt-2 text-sm text-accent">
                   Package subtotal ${studioSubtotal} includes sample components —
                   see Pricing for the published vs sample split.
@@ -831,7 +943,7 @@ export function BookingModal() {
 
           {step === "contact" && (
             <StepShell
-              eyebrow={isApp ? "Step 3" : "Step 4"}
+              eyebrow={skipPackagesAndAddons ? "Step 3" : "Step 4"}
               title="You"
               onBack={() => backFrom("contact")}
               onNext={async () => {
@@ -839,19 +951,31 @@ export function BookingModal() {
                   setError("Name, email, and phone — all three.");
                   return;
                 }
-                const check = await refreshEligibility(email, phone);
-                if (check && !check.canUseFirstTime && clientType === "first-time") {
-                  setClientType("returning");
-                  setError(
-                    check.reason ||
-                      "First-time rates already used for this contact — switched to returning.",
-                  );
-                  return;
+                if (rateMode === "engineered") {
+                  const check = await refreshEligibility(email, phone);
+                  if (
+                    check &&
+                    !check.canUseFirstTime &&
+                    clientType === "first-time"
+                  ) {
+                    setClientType("returning");
+                    setError(
+                      check.reason ||
+                        "First-time rates already used for this contact — switched to returning.",
+                    );
+                    return;
+                  }
                 }
                 setError("");
                 nextFrom("contact");
               }}
-              nextLabel={isApp ? (busy ? "Preparing…" : "Continue to agreement") : "Continue"}
+              nextLabel={
+                skipPackagesAndAddons
+                  ? busy
+                    ? "Preparing…"
+                    : "Continue to agreement"
+                  : "Continue"
+              }
               error={error}
             >
               <div className="space-y-3">
@@ -875,45 +999,59 @@ export function BookingModal() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
-                <div className="grid grid-cols-2 gap-2 pt-2">
-                  <button
-                    type="button"
-                    className={`border px-3 py-3 font-caps text-[18px] ${
-                      clientType === "first-time"
-                        ? "border-paper bg-graphite"
-                        : "border-rule"
-                    } ${
-                      eligibility && !eligibility.canUseFirstTime
-                        ? "cursor-not-allowed opacity-40"
-                        : ""
-                    }`}
-                    disabled={Boolean(eligibility && !eligibility.canUseFirstTime)}
-                    onClick={() => setClientType("first-time")}
-                  >
-                    First-time · ${ENGINEERED.firstTimeHourly}/hr
-                  </button>
-                  <button
-                    type="button"
-                    className={`border px-3 py-3 font-caps text-[18px] ${
-                      clientType === "returning"
-                        ? "border-paper bg-graphite"
-                        : "border-rule"
-                    }`}
-                    onClick={() => setClientType("returning")}
-                  >
-                    Returning · ${ENGINEERED.returningHourly}/hr
-                  </button>
-                </div>
-                {eligibilityLoading && (
+                {rateMode === "engineered" && (
+                  <div className="grid grid-cols-2 gap-2 pt-2">
+                    <button
+                      type="button"
+                      className={`border px-3 py-3 font-caps text-[18px] ${
+                        clientType === "first-time"
+                          ? "border-paper bg-graphite"
+                          : "border-rule"
+                      } ${
+                        eligibility && !eligibility.canUseFirstTime
+                          ? "cursor-not-allowed opacity-40"
+                          : ""
+                      }`}
+                      disabled={Boolean(
+                        eligibility && !eligibility.canUseFirstTime,
+                      )}
+                      onClick={() => setClientType("first-time")}
+                    >
+                      First-time · ${ENGINEERED.firstTimeHourly}/hr
+                    </button>
+                    <button
+                      type="button"
+                      className={`border px-3 py-3 font-caps text-[18px] ${
+                        clientType === "returning"
+                          ? "border-paper bg-graphite"
+                          : "border-rule"
+                      }`}
+                      onClick={() => setClientType("returning")}
+                    >
+                      Returning · ${ENGINEERED.returningHourly}/hr
+                    </button>
+                  </div>
+                )}
+                {rateMode === "room-only" && (
+                  <p className="pt-2 text-sm text-muted">
+                    Room-only total: ${studioSubtotal} for {hours}h in{" "}
+                    {selectedRoom.name} (${selectedRoom.hourly}/hr). Deposit $
+                    {deposit}.
+                  </p>
+                )}
+                {eligibilityLoading && rateMode === "engineered" && (
                   <p className="text-sm text-muted">Checking first-session eligibility…</p>
                 )}
-                {eligibility && !eligibility.canUseFirstTime && (
+                {rateMode === "engineered" &&
+                  eligibility &&
+                  !eligibility.canUseFirstTime && (
                   <p className="text-sm text-accent">
                     {eligibility.reason ||
                       "This contact already booked — returning rates apply."}
                   </p>
                 )}
-                {eligibility?.canUseIntroPromo &&
+                {rateMode === "engineered" &&
+                  eligibility?.canUseIntroPromo &&
                   packageId === "session" &&
                   hours === INTRO_PROMO.hours &&
                   clientType === "first-time" && (
@@ -926,7 +1064,7 @@ export function BookingModal() {
             </StepShell>
           )}
 
-          {step === "addon" && !isApp && currentAddon && (
+          {step === "addon" && !skipPackagesAndAddons && currentAddon && (
             <StepShell
               eyebrow={`Add-on ${addonIndex + 1} of ${ADDONS.length}`}
               title={currentAddon.name}
