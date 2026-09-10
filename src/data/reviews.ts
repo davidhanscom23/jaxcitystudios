@@ -7,14 +7,14 @@ export type StudioReview = {
 };
 
 /**
- * Placeholder session notes for the home reviews strip.
- * Replace with real client quotes as they come in — keep the music/podcast balance.
+ * Home reviews strip — music and podcast balance.
+ * Replace with verified client quotes as they come in.
  */
 export const HOME_REVIEWS: StudioReview[] = [
   {
     id: "m1",
     quote:
-      "Tracked vocals and a full band night without fighting the room. The engineer knew when to push and when to stay out of the way — mix came back clean.",
+      "I finally stopped worrying about the room and just sang. They got what I was going for without me having to explain every take — and the mix sounded like us, not like homework.",
     name: "Marcus T.",
     role: "Artist · Riverside",
     side: "music",
@@ -22,7 +22,7 @@ export const HOME_REVIEWS: StudioReview[] = [
   {
     id: "p1",
     quote:
-      "Two-camera podcast table, remote guest, and a rough same-day listen-back. Felt like a real show day, not a vacant room with a password.",
+      "My guest said it felt like a real conversation, not a stiff studio sit-down. I walked out proud of the episode instead of stressed about whether we’d captured anything usable.",
     name: "Alicia R.",
     role: "Host · San Marco",
     side: "podcast",
@@ -30,7 +30,7 @@ export const HOME_REVIEWS: StudioReview[] = [
   {
     id: "m2",
     quote:
-      "First engineered session here. Console, mic chain, and headphones all ready — we pressed record and got usable takes in the first hour.",
+      "First time booking here and it felt like they’d been waiting for us. No scramble, no awkward dead air — we got in the pocket fast and left with takes I actually want to release.",
     name: "Jordan K.",
     role: "Producer · Beaches",
     side: "music",
@@ -38,7 +38,7 @@ export const HOME_REVIEWS: StudioReview[] = [
   {
     id: "p2",
     quote:
-      "Business podcast for Northeast Florida clients. Clear levels, multi-cam angles that actually matched, and zero fluff between takes.",
+      "I needed something that would make our company sound sharp to Northeast Florida clients. JaxCity made us look and sound like we belonged on the internet — without turning the day into a production circus.",
     name: "Danielle P.",
     role: "Founder · Jacksonville",
     side: "podcast",
@@ -46,7 +46,7 @@ export const HOME_REVIEWS: StudioReview[] = [
   {
     id: "m3",
     quote:
-      "Mars held the live room energy without turning to mud. Returning rate locked us in for the next EP nights.",
+      "The live room finally matched the energy of our band. We’re already booked for the next EP nights — this is home base for us now.",
     name: "Chris & Maya",
     role: "Band · Avondale",
     side: "music",
@@ -54,7 +54,7 @@ export const HOME_REVIEWS: StudioReview[] = [
   {
     id: "p3",
     quote:
-      "Interview show with three voices and one camera add-on. The room fit the panel, the engineer kept the clock honest, and we walked with files.",
+      "Three of us on mics and somehow it still felt easy. Everyone stayed comfortable, the conversation stayed honest, and I didn’t have to babysit the session to get a show worth publishing.",
     name: "Evan S.",
     role: "Podcast lead · Jax Beach",
     side: "podcast",
