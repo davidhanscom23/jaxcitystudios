@@ -222,8 +222,8 @@ export default function PricingPage() {
         <Link href="/company-show" className="btn btn-solid no-underline">
           The Company Show
         </Link>
-        <Link href="/planner" className="btn no-underline">
-          Build Your Show
+        <Link href="/contact" className="btn no-underline">
+          Contact the studio
         </Link>
         <PricingActions />
       </div>

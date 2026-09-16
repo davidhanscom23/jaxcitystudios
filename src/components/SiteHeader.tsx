@@ -7,12 +7,9 @@ import { useState } from "react";
 import { useBooking } from "@/components/booking/BookingProvider";
 
 const LINKS = [
-  { href: "/lineup", label: "Lineup" },
   { href: "/company-show", label: "Company Show" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/planner", label: "Build Your Show" },
   { href: "/agreement", label: "Agreement" },
-  { href: "/blog", label: "Journal" },
   { href: "/contact", label: "Contact" },
 ];
 

@@ -8,13 +8,13 @@ export function SiteFooter() {
       <div className="wide-margin section-space">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="font-caps text-[18px] text-cyan">Brand line</p>
-            <p className="font-display crop-type mt-3 text-[clamp(3rem,12vw,8rem)] text-paper text-glow-cyan">
+            <p className="font-display crop-type mt-0 text-[clamp(3rem,12vw,8rem)] text-paper text-glow-cyan">
               {STUDIO.brandLine}
             </p>
             <p className="mt-4 max-w-xl font-body text-paper-dim">
-              Music recording and podcast production for {STUDIO.region}. The room
-              and the engineer are the session.
+              Music recording and podcast production for {STUDIO.region}. Book
+              with a JaxCity engineer on site, or bring your own and rent the
+              room and gear.
             </p>
           </div>
           <Image
@@ -52,19 +52,13 @@ export function SiteFooter() {
             <p className="font-caps text-[18px] text-muted">Navigate</p>
             <ul className="mt-4 space-y-2">
               <li>
-                <Link href="/lineup">Lineup</Link>
-              </li>
-              <li>
                 <Link href="/company-show">Company Show</Link>
               </li>
               <li>
                 <Link href="/pricing">Pricing</Link>
               </li>
               <li>
-                <Link href="/planner">Build Your Show</Link>
-              </li>
-              <li>
-                <Link href="/blog">Journal</Link>
+                <Link href="/agreement">Agreement</Link>
               </li>
               <li>
                 <Link href="/contact">Contact</Link>
