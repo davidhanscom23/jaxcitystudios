@@ -282,7 +282,7 @@ export function CompanyShowPage() {
               <a href={`mailto:${STUDIO.email}`}>{STUDIO.email}</a>.
             </p>
             <p className="mt-6">
-              <Link href="/lineup#podcast" className="font-caps text-[18px] text-muted">
+              <Link href="/pricing" className="font-caps text-[18px] text-muted">
                 Prefer à la carte podcast studio time →
               </Link>
             </p>

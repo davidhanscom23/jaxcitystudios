@@ -40,11 +40,12 @@ export function HomePage() {
               {STUDIO.brandLine}
             </h1>
             <p className="fade-in-late mt-6 max-w-md text-lg text-paper-dim">
-              Music recording and podcast production — the room and the engineer
-              are the whole session.
+              Music recording and podcast production for {STUDIO.region}. Work
+              with a JaxCity engineer on site, or bring your own and use the
+              studio.
             </p>
             <div className="fade-in-late mt-10 flex flex-wrap gap-3">
-              <Link href="/lineup#music" className="btn btn-solid no-underline">
+              <Link href="/pricing" className="btn btn-solid no-underline">
                 Music recording
               </Link>
               <Link href="/company-show" className="btn no-underline">
@@ -73,14 +74,14 @@ export function HomePage() {
               Music
             </h2>
             <p className="mt-4 max-w-md text-paper-dim">
-              Tracking, mixing, full-band nights. An engineer runs the session —
-              not a vacant room with a password on the door.
+              Tracking, mixing, full-band nights. Book a JaxCity engineer to run
+              the session — or bring your own and rent the room and gear.
             </p>
             <Link
-              href="/lineup#music"
+              href="/pricing"
               className="mt-6 inline-block font-caps text-[18px] text-cyan"
             >
-              See music lineup →
+              See music rates →
             </Link>
           </article>
           <article>
@@ -107,12 +108,6 @@ export function HomePage() {
                 className="font-caps text-[18px] text-magenta"
               >
                 The Company Show →
-              </Link>
-              <Link
-                href="/lineup#podcast"
-                className="font-caps text-[18px] text-muted"
-              >
-                Podcast lineup →
               </Link>
             </div>
           </article>
@@ -189,10 +184,11 @@ export function HomePage() {
           <div className="max-w-lg">
             <p className="font-caps text-[18px] text-cyan">The rooms</p>
             <h2 className="font-display mt-3 text-4xl text-glow-cyan sm:text-6xl">
-              The engineer runs the night
+              Your session, your call
             </h2>
             <p className="mt-4 text-paper-dim">
-              Serving {STUDIO.region}. Serious inquiries only — then we work.
+              JaxCity engineer on site — or bring your own and take the room.
+              Serving {STUDIO.region}. Serious inquiries only.
             </p>
           </div>
         </div>
